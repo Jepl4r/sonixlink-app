@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The now-playing screen, like the player's: the blurred artwork behind, the
+     whole artwork in front, the bar with the two clocks and the position in the
+     queue, and the same buttons underneath. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_bg">
+
+    <!-- The whole screen sits in one sheet, because a finger dragging it down
+         takes all of it: background, veil and content. -->
+    <FrameLayout
+        android:id="@+id/sheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop" />
+
+    <!-- The veil: without it, white text on light artwork does not read. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3121212" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- The handle: it says the screen pulls down, and does nothing else.
+             Not a button, and not pressed; dragged. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="32dp">
+
+            <View
+                android:id="@+id/handle"
+                android:layout_width="38dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/sheet_handle" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp">
+
+            <ImageView
+                android:id="@+id/cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/coverPlaceholder"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_track"
+                android:tint="@color/text_secondary" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp"
+            android:paddingStart="28dp"
+            android:paddingEnd="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Scrolls itself when it does not fit, as on the player. -->
+                <TextView
+                    android:id="@+id/trackTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/trackArtist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/favouriteButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_favourite"
+                android:contentDescription="@string/cd_favourite"
+                android:tint="@color/text_secondary" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/progressSeek"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:max="1000"
+            android:progressDrawable="@drawable/progress_track"
+            android:splitTrack="false"
+            android:paddingStart="9dp"
+            android:paddingEnd="9dp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp">
+
+            <TextView
+                android:id="@+id/elapsed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:text="0:00"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/queuePosition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/total"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="0:00"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            android:paddingBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/modeButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_repeat_off"
+                android:contentDescription="@string/cd_mode"
+                android:tint="@color/text_secondary" />
+
+            <ImageButton
+                android:id="@+id/prevButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_prev"
+                android:contentDescription="@string/cd_prev"
+                android:tint="@color/text_primary" />
+
+            <ImageButton
+                android:id="@+id/playButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_play"
+                android:contentDescription="@string/cd_play"
+                android:scaleType="fitCenter" />
+
+            <ImageButton
+                android:id="@+id/nextButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_next"
+                android:contentDescription="@string/cd_next"
+                android:tint="@color/text_primary" />
+
+            <ImageButton
+                android:id="@+id/queueButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_queue"
+                android:contentDescription="@string/cd_queue"
+                android:tint="@color/text_secondary" />
+        </LinearLayout>
+    </LinearLayout>
+    </FrameLayout>
+
+    <!-- The pill sits outside the sheet: while it is up the drag does not
+         start, and it must not go down with the rest. -->
+    <include
+        android:id="@+id/volume"
+        layout="@layout/volume_pill" />
+
+</FrameLayout>

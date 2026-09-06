@@ -1,0 +1,69 @@
+<resources>
+    <string name="connect_title">Найти плеер</string>
+    <string name="connect_searching">Поиск…</string>
+    <string name="connect_none">Плеер не найден. Проверьте, что SonixLink включён на плеере и что телефон в той же сети Wi-Fi.</string>
+    <string name="connect_rescan">Искать снова</string>
+    <string name="connect_failed">Не отвечает: %1$s</string>
+
+    <string name="crash_title">Приложение закрылось само</string>
+    <string name="crash_copy">Копировать</string>
+    <string name="crash_dismiss">Закрыть</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Найден %1$d плеер</item>
+        <item quantity="few">Найдено %1$d плеера</item>
+        <item quantity="many">Найдено %1$d плееров</item>
+        <item quantity="other">Найдено %1$d плеера</item>
+    </plurals>
+
+    <string name="tab_tracks">Треки</string>
+    <string name="tab_albums">Альбомы</string>
+    <string name="tab_artists">Исполнители</string>
+    <string name="tab_album_artists">Исп. альбомов</string>
+    <string name="tab_playlists">Плейлисты</string>
+    <string name="tab_favourites">Избранное</string>
+
+    <string name="downloading">Загрузка индекса…</string>
+    <string name="downloading_progress">Загрузка индекса… %1$d%%</string>
+    <string name="download_failed">Не удалось загрузить индекс: %1$s</string>
+    <string name="library_ready">%1$d треков</string>
+    <string name="scanning_wait">Плеер сканирует фонотеку. Повторите, когда он закончит.</string>
+    <string name="empty_list">Здесь пусто.</string>
+    <string name="tracks_count">%1$d треков</string>
+    <string name="nothing_playing">Ничего не воспроизводится</string>
+    <string name="refresh_library">Обновить индекс</string>
+    <string name="disconnect">Сменить устройство</string>
+    <string name="search_hint">Поиск</string>
+    <string name="search_title">Поиск</string>
+    <string name="search_nothing">Ничего не найдено.</string>
+    <string name="command_failed">Плеер не ответил.</string>
+    <string name="playing_now">Сейчас играет</string>
+    <string name="syncing">Синхронизация треков…</string>
+    <string name="sync_library">Загрузка индекса фонотеки</string>
+    <string name="sync_covers">Загрузка обложек</string>
+    <string name="sync_unreachable">Плеер не отвечает.</string>
+    <string name="sync_no_library">Не удалось загрузить индекс.</string>
+    <string name="retry">Повторить</string>
+
+    <string name="queue_title">Очередь</string>
+    <string name="queue_position">%1$d из %2$d</string>
+    <string name="queue_empty">Очередь пуста.</string>
+
+    <string name="mode_normal">По порядку</string>
+    <string name="mode_repeat_all">Повтор всего</string>
+    <string name="mode_repeat_one">Повтор трека</string>
+    <string name="mode_shuffle">Случайно</string>
+    <string name="mode_shuffle_repeat">Случайно с повтором</string>
+
+    <string name="cd_play">Воспроизвести</string>
+    <string name="cd_pause">Пауза</string>
+    <string name="cd_next">Следующий</string>
+    <string name="cd_prev">Предыдущий</string>
+    <string name="cd_mode">Режим воспроизведения</string>
+    <string name="cd_volume">Громкость</string>
+    <string name="cd_favourite">Избранное</string>
+    <string name="cd_queue">Очередь</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_close">Закрыть</string>
+    <string name="volume_label">Громкость %1$d</string>
+</resources>

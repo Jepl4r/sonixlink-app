@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_bg">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- A LinearLayout and not an AppBarLayout: nothing here has to collapse on
+         scroll, and an AppBarLayout outside a CoordinatorLayout brings
+         behaviour with it that is not wanted. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/screen_bg">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/screen_bg"
+            app:titleTextColor="@color/text_primary"
+            app:subtitleTextColor="@color/text_secondary" />
+
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/screen_bg"
+            app:tabMode="scrollable"
+            app:tabGravity="start"
+            app:tabIndicatorColor="@color/accent"
+            app:tabSelectedTextColor="@color/text_primary"
+            app:tabTextColor="@color/text_secondary" />
+    </LinearLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- The transport bar: always visible, so the controls are a thumb away
+         whichever tab is open. -->
+    <LinearLayout
+        android:id="@+id/nowPlaying"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/panel">
+
+        <ProgressBar
+            android:id="@+id/progressTrack"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:max="1000"
+            android:progress="0"
+            android:progressTint="@color/accent" />
+
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="12dp">
+
+            <ImageView
+                android:id="@+id/nowCover"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="12dp"
+                android:background="@color/surface"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/nowDetails"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
+
+                <!-- They scroll themselves when they do not fit, as in the
+                     now-playing screen and on the player. -->
+                <TextView
+                    android:id="@+id/trackTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:text="@string/nothing_playing"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/trackArtist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- The star sits beside the track it is about, not among the
+                 transport controls. -->
+            <ImageButton
+                android:id="@+id/favouriteButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_favourite"
+                android:contentDescription="@string/cd_favourite"
+                android:tint="@color/text_secondary" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:paddingBottom="12dp">
+
+            <ImageButton
+                android:id="@+id/modeButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_repeat_off"
+                android:contentDescription="@string/cd_mode"
+                android:tint="@color/text_secondary" />
+
+            <ImageButton
+                android:id="@+id/prevButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_prev"
+                android:contentDescription="@string/cd_prev"
+                android:tint="@color/text_primary" />
+
+            <!-- The circle comes from Accent.circleButton, which knows this
+                 player's accent. -->
+            <ImageButton
+                android:id="@+id/playButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:padding="14dp"
+                android:src="@drawable/ic_play"
+                android:contentDescription="@string/cd_play"
+                android:scaleType="fitCenter" />
+
+            <ImageButton
+                android:id="@+id/nextButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_next"
+                android:contentDescription="@string/cd_next"
+                android:tint="@color/text_primary" />
+
+            <ImageButton
+                android:id="@+id/queueButton"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_queue"
+                android:contentDescription="@string/cd_queue"
+                android:tint="@color/text_secondary" />
+        </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+
+  <!-- The volume pop-up: the player's pill, the same one every other page
+       that can turn it up has. -->
+  <include
+      android:id="@+id/volume"
+      layout="@layout/volume_pill" />
+
+</FrameLayout>

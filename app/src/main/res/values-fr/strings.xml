@@ -1,0 +1,67 @@
+<resources>
+    <string name="connect_title">Trouver le lecteur</string>
+    <string name="connect_searching">Recherche en cours…</string>
+    <string name="connect_none">Aucun lecteur trouvé. Vérifiez que SonixLink est activé sur le lecteur et que le téléphone est sur le même réseau Wi-Fi.</string>
+    <string name="connect_rescan">Chercher à nouveau</string>
+    <string name="connect_failed">Pas de réponse : %1$s</string>
+
+    <string name="crash_title">L\'application s\'est fermée toute seule</string>
+    <string name="crash_copy">Copier</string>
+    <string name="crash_dismiss">Fermer</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Un lecteur trouvé</item>
+        <item quantity="other">%1$d lecteurs trouvés</item>
+    </plurals>
+
+    <string name="tab_tracks">Morceaux</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Artistes</string>
+    <string name="tab_album_artists">Artistes d\'album</string>
+    <string name="tab_playlists">Listes de lecture</string>
+    <string name="tab_favourites">Favoris</string>
+
+    <string name="downloading">Téléchargement de l\'index…</string>
+    <string name="downloading_progress">Téléchargement de l\'index… %1$d%%</string>
+    <string name="download_failed">Impossible de télécharger l\'index : %1$s</string>
+    <string name="library_ready">%1$d morceaux</string>
+    <string name="scanning_wait">Le lecteur analyse la bibliothèque. Réessayez quand il aura fini.</string>
+    <string name="empty_list">Rien ici.</string>
+    <string name="tracks_count">%1$d morceaux</string>
+    <string name="nothing_playing">Aucune lecture</string>
+    <string name="refresh_library">Actualiser l\'index</string>
+    <string name="disconnect">Changer d\'appareil</string>
+    <string name="search_hint">Rechercher</string>
+    <string name="search_title">Rechercher</string>
+    <string name="search_nothing">Aucun résultat.</string>
+    <string name="command_failed">Le lecteur n\'a pas répondu.</string>
+    <string name="playing_now">Lecture en cours</string>
+    <string name="syncing">Synchronisation des morceaux…</string>
+    <string name="sync_library">Téléchargement de l\'index de la bibliothèque</string>
+    <string name="sync_covers">Téléchargement des pochettes</string>
+    <string name="sync_unreachable">Le lecteur ne répond pas.</string>
+    <string name="sync_no_library">Impossible de télécharger l\'index.</string>
+    <string name="retry">Réessayer</string>
+
+    <string name="queue_title">File d\'attente</string>
+    <string name="queue_position">%1$d sur %2$d</string>
+    <string name="queue_empty">La file d\'attente est vide.</string>
+
+    <string name="mode_normal">Dans l\'ordre</string>
+    <string name="mode_repeat_all">Tout répéter</string>
+    <string name="mode_repeat_one">Répéter le morceau</string>
+    <string name="mode_shuffle">Aléatoire</string>
+    <string name="mode_shuffle_repeat">Aléatoire en boucle</string>
+
+    <string name="cd_play">Lecture</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_next">Suivant</string>
+    <string name="cd_prev">Précédent</string>
+    <string name="cd_mode">Mode de lecture</string>
+    <string name="cd_volume">Volume</string>
+    <string name="cd_favourite">Favori</string>
+    <string name="cd_queue">File d\'attente</string>
+    <string name="cd_back">Retour</string>
+    <string name="cd_close">Fermer</string>
+    <string name="volume_label">Volume %1$d</string>
+</resources>

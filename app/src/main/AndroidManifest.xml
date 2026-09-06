@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Il lettore sta sulla stessa rete: serve internet per parlarci, lo stato
+         del Wi-Fi per sapere se c'e' una rete, e il multicast per farsi trovare
+         via mDNS. Nessun permesso oltre questi. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <application
+        android:name=".SonixLinkApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SonixLink"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".ConnectActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".SyncActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name" />
+
+        <activity
+            android:name=".NowPlayingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name" />
+
+        <activity
+            android:name=".SearchActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="@string/search_title" />
+
+        <activity
+            android:name=".QueueActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="@string/queue_title"
+            android:parentActivityName=".MainActivity" />
+    </application>
+</manifest>

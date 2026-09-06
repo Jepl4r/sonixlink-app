@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The player's volume pill, once: the same proportions and the same order as
+     volume_overlay.c (icon, number, scale). Every screen that can turn the
+     volume up includes it and hands it to VolumePill.
+
+     The root has no id: with one, the <include>'s id would replace it and view
+     binding would be a different shape on every page. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:layout_marginTop="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/volume_pill"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/volumeIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_volume_high"
+            android:contentDescription="@string/cd_volume"
+            android:tint="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/volumeText"
+            android:layout_width="34dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/volumeSeek"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:max="100"
+            android:progressDrawable="@drawable/volume_track"
+            android:thumb="@drawable/volume_thumb"
+            android:thumbOffset="7dp"
+            android:splitTrack="false"
+            android:paddingStart="7dp"
+            android:paddingEnd="7dp" />
+    </LinearLayout>
+</FrameLayout>

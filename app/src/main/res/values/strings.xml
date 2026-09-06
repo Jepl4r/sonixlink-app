@@ -1,0 +1,72 @@
+<resources>
+    <!-- English is the fallback: Android picks values-<language> when there is
+         one, and lands here for every other. -->
+    <string name="app_name">SonixLink</string>
+
+    <string name="connect_title">Find the player</string>
+    <string name="connect_searching">Searching…</string>
+    <string name="connect_none">No player found. Check that SonixLink is on in the player and that the phone is on the same Wi-Fi network.</string>
+    <string name="connect_rescan">Search again</string>
+    <string name="connect_failed">No answer: %1$s</string>
+
+    <string name="crash_title">The app closed itself</string>
+    <string name="crash_copy">Copy</string>
+    <string name="crash_dismiss">Close</string>
+
+    <plurals name="players_found">
+        <item quantity="one">One player found</item>
+        <item quantity="other">%1$d players found</item>
+    </plurals>
+
+    <string name="tab_tracks">Tracks</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_album_artists">Album artists</string>
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_favourites">Favourites</string>
+
+    <string name="downloading">Downloading the index…</string>
+    <string name="downloading_progress">Downloading the index… %1$d%%</string>
+    <string name="download_failed">Could not download the index: %1$s</string>
+    <string name="library_ready">%1$d tracks</string>
+    <string name="scanning_wait">The player is scanning the library. Try again when it has finished.</string>
+    <string name="empty_list">Nothing here.</string>
+    <string name="tracks_count">%1$d tracks</string>
+    <string name="nothing_playing">Nothing playing</string>
+    <string name="refresh_library">Refresh the index</string>
+    <string name="disconnect">Change device</string>
+    <string name="search_hint">Search</string>
+    <string name="search_title">Search</string>
+    <string name="search_nothing">No results.</string>
+    <string name="command_failed">The player did not answer.</string>
+    <string name="playing_now">Playing now</string>
+    <string name="syncing">Syncing tracks…</string>
+    <string name="sync_library">Downloading the library index</string>
+    <string name="sync_covers">Downloading the covers</string>
+    <string name="sync_unreachable">The player is not answering.</string>
+    <string name="sync_no_library">Could not download the index.</string>
+    <string name="retry">Try again</string>
+
+    <string name="queue_title">Queue</string>
+    <string name="queue_position">%1$d of %2$d</string>
+    <string name="queue_empty">The queue is empty.</string>
+
+    <string name="mode_normal">In order</string>
+    <string name="mode_repeat_all">Repeat all</string>
+    <string name="mode_repeat_one">Repeat one</string>
+    <string name="mode_shuffle">Shuffle</string>
+    <string name="mode_shuffle_repeat">Shuffle and repeat</string>
+    <string name="mode_changed">%1$s</string>
+
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_next">Next</string>
+    <string name="cd_prev">Previous</string>
+    <string name="cd_mode">Playback mode</string>
+    <string name="cd_volume">Volume</string>
+    <string name="cd_favourite">Favourite</string>
+    <string name="cd_queue">Queue</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_close">Close</string>
+    <string name="volume_label">Volume %1$d</string>
+</resources>

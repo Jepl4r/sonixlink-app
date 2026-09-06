@@ -1,0 +1,67 @@
+<resources>
+    <string name="connect_title">Player suchen</string>
+    <string name="connect_searching">Suche läuft…</string>
+    <string name="connect_none">Kein Player gefunden. Prüfe, ob SonixLink im Player eingeschaltet ist und ob das Telefon im selben WLAN ist.</string>
+    <string name="connect_rescan">Erneut suchen</string>
+    <string name="connect_failed">Keine Antwort: %1$s</string>
+
+    <string name="crash_title">Die App hat sich beendet</string>
+    <string name="crash_copy">Kopieren</string>
+    <string name="crash_dismiss">Schließen</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Ein Player gefunden</item>
+        <item quantity="other">%1$d Player gefunden</item>
+    </plurals>
+
+    <string name="tab_tracks">Titel</string>
+    <string name="tab_albums">Alben</string>
+    <string name="tab_artists">Interpreten</string>
+    <string name="tab_album_artists">Album-Interpreten</string>
+    <string name="tab_playlists">Wiedergabelisten</string>
+    <string name="tab_favourites">Favoriten</string>
+
+    <string name="downloading">Index wird geladen…</string>
+    <string name="downloading_progress">Index wird geladen… %1$d%%</string>
+    <string name="download_failed">Index konnte nicht geladen werden: %1$s</string>
+    <string name="library_ready">%1$d Titel</string>
+    <string name="scanning_wait">Der Player durchsucht gerade die Bibliothek. Versuche es danach noch einmal.</string>
+    <string name="empty_list">Hier ist nichts.</string>
+    <string name="tracks_count">%1$d Titel</string>
+    <string name="nothing_playing">Nichts wird abgespielt</string>
+    <string name="refresh_library">Index aktualisieren</string>
+    <string name="disconnect">Gerät wechseln</string>
+    <string name="search_hint">Suchen</string>
+    <string name="search_title">Suchen</string>
+    <string name="search_nothing">Keine Treffer.</string>
+    <string name="command_failed">Der Player hat nicht geantwortet.</string>
+    <string name="playing_now">Wird abgespielt</string>
+    <string name="syncing">Titel werden abgeglichen…</string>
+    <string name="sync_library">Bibliotheksindex wird geladen</string>
+    <string name="sync_covers">Cover werden geladen</string>
+    <string name="sync_unreachable">Der Player antwortet nicht.</string>
+    <string name="sync_no_library">Index konnte nicht geladen werden.</string>
+    <string name="retry">Erneut versuchen</string>
+
+    <string name="queue_title">Warteschlange</string>
+    <string name="queue_position">%1$d von %2$d</string>
+    <string name="queue_empty">Die Warteschlange ist leer.</string>
+
+    <string name="mode_normal">Der Reihe nach</string>
+    <string name="mode_repeat_all">Alle wiederholen</string>
+    <string name="mode_repeat_one">Titel wiederholen</string>
+    <string name="mode_shuffle">Zufällig</string>
+    <string name="mode_shuffle_repeat">Zufällig wiederholen</string>
+
+    <string name="cd_play">Abspielen</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_next">Weiter</string>
+    <string name="cd_prev">Zurück</string>
+    <string name="cd_mode">Wiedergabemodus</string>
+    <string name="cd_volume">Lautstärke</string>
+    <string name="cd_favourite">Favorit</string>
+    <string name="cd_queue">Warteschlange</string>
+    <string name="cd_back">Zurück</string>
+    <string name="cd_close">Schließen</string>
+    <string name="volume_label">Lautstärke %1$d</string>
+</resources>

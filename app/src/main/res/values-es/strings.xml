@@ -1,0 +1,67 @@
+<resources>
+    <string name="connect_title">Buscar el reproductor</string>
+    <string name="connect_searching">Buscando…</string>
+    <string name="connect_none">No se ha encontrado ningún reproductor. Comprueba que SonixLink esté activado en el reproductor y que el teléfono esté en la misma red Wi-Fi.</string>
+    <string name="connect_rescan">Buscar de nuevo</string>
+    <string name="connect_failed">No responde: %1$s</string>
+
+    <string name="crash_title">La aplicación se ha cerrado sola</string>
+    <string name="crash_copy">Copiar</string>
+    <string name="crash_dismiss">Cerrar</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Un reproductor encontrado</item>
+        <item quantity="other">%1$d reproductores encontrados</item>
+    </plurals>
+
+    <string name="tab_tracks">Canciones</string>
+    <string name="tab_albums">Álbumes</string>
+    <string name="tab_artists">Artistas</string>
+    <string name="tab_album_artists">Artistas del álbum</string>
+    <string name="tab_playlists">Listas de reproducción</string>
+    <string name="tab_favourites">Favoritos</string>
+
+    <string name="downloading">Descargando el índice…</string>
+    <string name="downloading_progress">Descargando el índice… %1$d%%</string>
+    <string name="download_failed">No se ha podido descargar el índice: %1$s</string>
+    <string name="library_ready">%1$d canciones</string>
+    <string name="scanning_wait">El reproductor está analizando la biblioteca. Inténtalo de nuevo cuando termine.</string>
+    <string name="empty_list">Aquí no hay nada.</string>
+    <string name="tracks_count">%1$d canciones</string>
+    <string name="nothing_playing">No se está reproduciendo nada</string>
+    <string name="refresh_library">Actualizar el índice</string>
+    <string name="disconnect">Cambiar de dispositivo</string>
+    <string name="search_hint">Buscar</string>
+    <string name="search_title">Buscar</string>
+    <string name="search_nothing">Sin resultados.</string>
+    <string name="command_failed">El reproductor no ha respondido.</string>
+    <string name="playing_now">Reproduciendo</string>
+    <string name="syncing">Sincronizando canciones…</string>
+    <string name="sync_library">Descargando el índice de la biblioteca</string>
+    <string name="sync_covers">Descargando las carátulas</string>
+    <string name="sync_unreachable">El reproductor no responde.</string>
+    <string name="sync_no_library">No se ha podido descargar el índice.</string>
+    <string name="retry">Reintentar</string>
+
+    <string name="queue_title">Cola</string>
+    <string name="queue_position">%1$d de %2$d</string>
+    <string name="queue_empty">La cola está vacía.</string>
+
+    <string name="mode_normal">En orden</string>
+    <string name="mode_repeat_all">Repetir todo</string>
+    <string name="mode_repeat_one">Repetir una</string>
+    <string name="mode_shuffle">Aleatorio</string>
+    <string name="mode_shuffle_repeat">Aleatorio en bucle</string>
+
+    <string name="cd_play">Reproducir</string>
+    <string name="cd_pause">Pausa</string>
+    <string name="cd_next">Siguiente</string>
+    <string name="cd_prev">Anterior</string>
+    <string name="cd_mode">Modo de reproducción</string>
+    <string name="cd_volume">Volumen</string>
+    <string name="cd_favourite">Favorito</string>
+    <string name="cd_queue">Cola</string>
+    <string name="cd_back">Atrás</string>
+    <string name="cd_close">Cerrar</string>
+    <string name="volume_label">Volumen %1$d</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The bar at the top of the now-playing screen: shape only. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#66FFFFFF" />
+    <corners android:radius="2dp" />
+</shape>

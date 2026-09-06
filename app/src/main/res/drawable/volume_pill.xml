@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The pill: the player's panel colour at 90 per cent, radius half the
+     height. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#E61E1E1E" />
+    <corners android:radius="24dp" />
+</shape>

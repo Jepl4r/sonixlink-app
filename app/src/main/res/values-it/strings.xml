@@ -1,0 +1,72 @@
+<resources>
+    <!-- Italian is no longer the default: that is English, in values/, where
+         Android lands for every language it does not find here. -->
+    <string name="app_name">SonixLink</string>
+
+    <string name="connect_title">Trova il lettore</string>
+    <string name="connect_searching">Ricerca in corso…</string>
+    <string name="connect_none">Nessun lettore trovato. Controlla che SonixLink sia acceso sul lettore e che il telefono sia sulla stessa rete Wi-Fi.</string>
+    <string name="connect_rescan">Cerca di nuovo</string>
+    <string name="connect_failed">Non risponde: %1$s</string>
+
+    <string name="crash_title">L\'app si è chiusa da sola</string>
+    <string name="crash_copy">Copia</string>
+    <string name="crash_dismiss">Chiudi</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Un lettore trovato</item>
+        <item quantity="other">%1$d lettori trovati</item>
+    </plurals>
+
+    <string name="tab_tracks">Brani</string>
+    <string name="tab_albums">Album</string>
+    <string name="tab_artists">Artisti</string>
+    <string name="tab_album_artists">Artisti album</string>
+    <string name="tab_playlists">Playlist</string>
+    <string name="tab_favourites">Preferiti</string>
+
+    <string name="downloading">Scarico l\'indice…</string>
+    <string name="downloading_progress">Scarico l\'indice… %1$d%%</string>
+    <string name="download_failed">Non sono riuscito a scaricare l\'indice: %1$s</string>
+    <string name="library_ready">%1$d brani</string>
+    <string name="scanning_wait">Il lettore sta scandendo la libreria. Riprova quando ha finito.</string>
+    <string name="empty_list">Niente qui.</string>
+    <string name="tracks_count">%1$d brani</string>
+    <string name="nothing_playing">Niente in riproduzione</string>
+    <string name="refresh_library">Aggiorna l\'indice</string>
+    <string name="disconnect">Cambia dispositivo</string>
+    <string name="search_hint">Cerca</string>
+    <string name="search_title">Cerca</string>
+    <string name="search_nothing">Nessun risultato.</string>
+    <string name="command_failed">Il lettore non ha risposto.</string>
+    <string name="playing_now">In riproduzione</string>
+    <string name="syncing">Sincronizzo brani…</string>
+    <string name="sync_library">Scarico l\'indice della libreria</string>
+    <string name="sync_covers">Scarico le copertine</string>
+    <string name="sync_unreachable">Il lettore non risponde.</string>
+    <string name="sync_no_library">Non sono riuscito a scaricare l\'indice.</string>
+    <string name="retry">Riprova</string>
+
+    <string name="queue_title">Coda</string>
+    <string name="queue_position">%1$d di %2$d</string>
+    <string name="queue_empty">La coda è vuota.</string>
+
+    <string name="mode_normal">In ordine</string>
+    <string name="mode_repeat_all">Ripeti tutto</string>
+    <string name="mode_repeat_one">Ripeti uno</string>
+    <string name="mode_shuffle">Casuale</string>
+    <string name="mode_shuffle_repeat">Casuale ripetuto</string>
+    <string name="mode_changed">%1$s</string>
+
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pausa</string>
+    <string name="cd_next">Successivo</string>
+    <string name="cd_prev">Precedente</string>
+    <string name="cd_mode">Modalità di riproduzione</string>
+    <string name="cd_volume">Volume</string>
+    <string name="cd_favourite">Preferito</string>
+    <string name="cd_queue">Coda</string>
+    <string name="cd_back">Indietro</string>
+    <string name="cd_close">Chiudi</string>
+    <string name="volume_label">Volume %1$d</string>
+</resources>
