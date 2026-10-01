@@ -55,6 +55,8 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <!-- The title row: the open album or artist, or in selection mode the
+             count and what can be done with the chosen rows. -->
         <LinearLayout
             android:id="@+id/header"
             android:layout_width="match_parent"
@@ -62,6 +64,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@color/surface"
+            android:minHeight="44dp"
             android:visibility="gone">
 
             <ImageButton
@@ -78,10 +81,42 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:paddingStart="8dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp" />
+
+            <!-- Selection mode's corner buttons, as in the library tabs. -->
+            <ImageButton
+                android:id="@+id/selQueue"
+                style="@style/CornerButton"
+                android:src="@drawable/ic_list_queue"
+                android:contentDescription="@string/sel_queue" />
+
+            <ImageButton
+                android:id="@+id/selFavAdd"
+                style="@style/CornerButton"
+                android:src="@drawable/ic_star_plus"
+                android:contentDescription="@string/sel_fav_add" />
+
+            <ImageButton
+                android:id="@+id/selFavRemove"
+                style="@style/CornerButton"
+                android:src="@drawable/ic_star_x"
+                android:contentDescription="@string/sel_fav_remove" />
+
+            <ImageButton
+                android:id="@+id/selPlaylistAdd"
+                style="@style/CornerButton"
+                android:src="@drawable/ic_list_plus"
+                android:contentDescription="@string/sel_playlist_add" />
+
+            <ImageButton
+                android:id="@+id/selClose"
+                style="@style/CornerButton"
+                android:src="@drawable/ic_close"
+                android:contentDescription="@string/cd_close" />
         </LinearLayout>
 
         <FrameLayout

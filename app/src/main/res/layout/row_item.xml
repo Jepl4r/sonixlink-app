@@ -1,86 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Artwork, or an icon when there is none, in the same square so titles
-         stay aligned across rows. -->
-    <FrameLayout
-        android:id="@+id/artwork"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="14dp"
-        android:background="@color/surface">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
+        <!-- Artwork, or an icon when there is none, in the same square so titles
+             stay aligned across rows. -->
+        <FrameLayout
+            android:id="@+id/artwork"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="14dp"
+            android:background="@color/surface">
+
+            <ImageView
+                android:id="@+id/cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_track"
+                android:tint="@color/text_secondary" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- The tick on a chosen row in selection mode, shown in place of the
+             chevron. -->
         <ImageView
-            android:id="@+id/cover"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/check"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:contentDescription="@null"
-            android:scaleType="centerCrop"
+            android:src="@drawable/ic_check"
             android:visibility="gone" />
 
         <ImageView
-            android:id="@+id/icon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
+            android:id="@+id/chevron"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:contentDescription="@null"
-            android:src="@drawable/ic_track"
-            android:tint="@color/text_secondary" />
-    </FrameLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp" />
-
-        <TextView
-            android:id="@+id/subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
+            android:src="@drawable/ic_chevron"
+            android:tint="@color/text_secondary"
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- The tick on a chosen row in selection mode, shown in place of the
-         chevron. -->
-    <ImageView
-        android:id="@+id/check"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_check"
+    <!-- The playmark: the accent bar on the left of the playing row, as the
+         player draws it: on the playing track, and in a list of albums or
+         artists on the one the playing track belongs to. -->
+    <View
+        android:id="@+id/playmark"
+        android:layout_width="3dp"
+        android:layout_height="26dp"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="4dp"
         android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/chevron"
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_chevron"
-        android:tint="@color/text_secondary"
-        android:visibility="gone" />
-</LinearLayout>
+</FrameLayout>

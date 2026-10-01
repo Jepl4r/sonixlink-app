@@ -41,12 +41,18 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    /** Notifies the tabs of favourite changes and of changes to the player's sort order. */
+    /** Notifies the tabs of changes on the player that their lists show. */
     interface LibraryListener {
         fun onFavouritesChanged()
 
         /** Called when the player's sort order changes; the tab should requery its list. */
         fun onOrderChanged() {}
+
+        /** Called when a playlist is made, changed or deleted on the player. */
+        fun onPlaylistsChanged() {}
+
+        /** Called on every state read, for the playmark; most reads change nothing. */
+        fun onNowPlaying(state: PlayerState) {}
     }
 
     private lateinit var views: ActivityMainBinding
@@ -56,6 +62,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var client: PlayerClient
 
     private val listeners = LinkedHashSet<LibraryListener>()
+
+    /**
+     * The favourites and playlists revisions of the last state read; -1 before
+     * the first. Kept while another screen is in front, so a change made there
+     * is noticed on the way back.
+     */
+    private var seenFavourites = -1L
+    private var seenPlaylists = -1L
 
     private lateinit var volume: VolumePill
 
@@ -406,6 +420,19 @@ class MainActivity : AppCompatActivity() {
             Session.sort = sort
             listeners.toList().forEach { it.onOrderChanged() }
         }
+        // Favourites and playlists changed anywhere -- here, on the search
+        // page, on the player itself -- make the tabs that show them requery.
+        if (state.favouritesRevision >= 0 && state.favouritesRevision != seenFavourites) {
+            val first = seenFavourites < 0
+            seenFavourites = state.favouritesRevision
+            if (!first) announceFavourites()
+        }
+        if (state.playlistsRevision >= 0 && state.playlistsRevision != seenPlaylists) {
+            val first = seenPlaylists < 0
+            seenPlaylists = state.playlistsRevision
+            if (!first) listeners.toList().forEach { it.onPlaylistsChanged() }
+        }
+        listeners.toList().forEach { it.onNowPlaying(state) }
         if (state.accent.isNotEmpty()) {
             val color = Session.parseAccent(state.accent)
             if (color != Session.accent) {

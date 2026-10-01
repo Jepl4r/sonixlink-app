@@ -122,6 +122,14 @@ data class PlayerState(
      */
     val displayPosition: Int = -1,
     val displayCount: Int = -1,
+    /** The album's artist from the tags; empty when they have none. */
+    val albumArtist: String = "",
+    /**
+     * Change whenever the favourites, or any playlist, do on the player. -1
+     * from a player that does not send them.
+     */
+    val favouritesRevision: Long = -1,
+    val playlistsRevision: Long = -1,
 ) {
     val isPlaying: Boolean get() = playState == 1
     val hasTrack: Boolean get() = title.isNotEmpty() || path.isNotEmpty()

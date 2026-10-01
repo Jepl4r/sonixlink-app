@@ -58,6 +58,9 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
     private var savedRow = 0
     private var savedOffset = 0
 
+    /** A change arrived from the player while rows were being chosen: requery when selection ends. */
+    private var staleWhileSelecting = false
+
     /** The big letter's disc, and which accent the drawn one is. */
     private val hint = android.os.Handler(android.os.Looper.getMainLooper())
     private val hideHint = Runnable { views?.indexHint?.visibility = View.GONE }
@@ -108,16 +111,18 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
 
         adapter = RowAdapter(section.icon, leadingFor(opened)) { at, row -> onRowClicked(at, row) }
         adapter.onLongPress = { at, row -> onRowLongPressed(at, row) }
+        adapter.marksCategory = Playmark.forSection(section)
+        adapter.playing = Session.state
         binding.list.layoutManager = LinearLayoutManager(requireContext())
         binding.list.adapter = adapter
         binding.headerBack.setOnClickListener { back.handleOnBackPressed() }
         binding.playMenu.setOnClickListener { showPlayMenu() }
         binding.selClose.setOnClickListener { stopSelection() }
-        binding.selQueue.setOnClickListener { actOnSelection(Action.QUEUE) }
-        binding.selFavAdd.setOnClickListener { actOnSelection(Action.FAVOURITES_ADD) }
-        binding.selFavRemove.setOnClickListener { actOnSelection(Action.FAVOURITES_REMOVE) }
-        binding.selPlaylistAdd.setOnClickListener { actOnSelection(Action.PLAYLIST_ADD) }
-        binding.selPlaylistRemove.setOnClickListener { actOnSelection(Action.PLAYLIST_REMOVE) }
+        binding.selQueue.setOnClickListener { actOnSelection(Selection.Action.QUEUE) }
+        binding.selFavAdd.setOnClickListener { actOnSelection(Selection.Action.FAVOURITES_ADD) }
+        binding.selFavRemove.setOnClickListener { actOnSelection(Selection.Action.FAVOURITES_REMOVE) }
+        binding.selPlaylistAdd.setOnClickListener { actOnSelection(Selection.Action.PLAYLIST_ADD) }
+        binding.selPlaylistRemove.setOnClickListener { actOnSelection(Selection.Action.PLAYLIST_REMOVE) }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, back)
         return binding.root
@@ -136,6 +141,7 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
         super.onStart()
         (activity as? MainActivity)?.addLibraryListener(this)
         Session.watchAccent(accentWatch)
+        adapter.playing = Session.state
     }
 
     override fun onStop() {
@@ -177,8 +183,33 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
 
     override fun onFavouritesChanged() {
         if (section == Section.FAVOURITES && opened == null) {
-            load()
+            reload()
         }
+    }
+
+    override fun onPlaylistsChanged() {
+        // The list of playlists and an open one alike.
+        if (section == Section.PLAYLISTS) {
+            reload()
+        }
+    }
+
+    override fun onNowPlaying(state: PlayerState) {
+        if (::adapter.isInitialized) adapter.playing = state
+    }
+
+    /**
+     * Requeries the list on screen where it stands: the change came from
+     * elsewhere, and the user's place in the list is kept. Waits while rows
+     * are being chosen, since the choice is by position.
+     */
+    private fun reload() {
+        if (views == null) return
+        if (adapter.selecting) {
+            staleWhileSelecting = true
+            return
+        }
+        load(keepScroll = true)
     }
 
     private fun onRowClicked(at: Int, row: Row) {
@@ -228,10 +259,13 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
         savedOffset = manager.findViewByPosition(savedRow)?.top ?: 0
     }
 
-    private fun load(restore: Boolean = false) {
+    private fun load(restore: Boolean = false, keepScroll: Boolean = false) {
         val binding = views ?: return
         val library = Session.library
         val category = opened
+        val shown = binding.list.layoutManager as? LinearLayoutManager
+        val keptRow = shown?.findFirstVisibleItemPosition()?.coerceAtLeast(0) ?: 0
+        val keptOffset = shown?.findViewByPosition(keptRow)?.top ?: 0
 
         updateHeader()
         binding.progress.visibility = View.VISIBLE
@@ -251,6 +285,8 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
             if (restore) {
                 // Coming back from a category, the list stays where it was.
                 manager?.scrollToPositionWithOffset(savedRow, savedOffset)
+            } else if (keepScroll) {
+                manager?.scrollToPositionWithOffset(keptRow, keptOffset)
             } else {
                 current.list.scrollToPosition(0)
             }
@@ -410,7 +446,7 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
         }
         show(binding.selQueue, selecting)
         show(binding.selFavAdd, selecting && !inFavourites)
-        show(binding.selPlaylistAdd, selecting)
+        show(binding.selPlaylistAdd, selecting && !inPlaylist)
         show(binding.selFavRemove, selecting && inFavourites)
         show(binding.selPlaylistRemove, selecting && inPlaylist)
         show(binding.selClose, selecting)
@@ -488,71 +524,59 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
     private fun stopSelection() {
         adapter.stopSelection()
         updateHeader()
-    }
-
-    private enum class Action { QUEUE, FAVOURITES_ADD, FAVOURITES_REMOVE, PLAYLIST_ADD, PLAYLIST_REMOVE }
-
-    /**
-     * The chosen rows as tracks, in the list's order and each once: a record
-     * or an artist stands for its tracks, as the player's selection does.
-     */
-    private fun gatherPaths(positions: List<Int>): List<String> {
-        val library = Session.library
-        val out = LinkedHashSet<String>()
-        for (at in positions) {
-            val row = adapter.rowAt(at) ?: continue
-            if (row.isTrack) {
-                out.add(row.path)
-                continue
-            }
-            if (library == null || row.filter.isEmpty()) continue
-            val tracks = when (section) {
-                Section.ALBUMS -> library.tracksOfAlbum(row.filter)
-                Section.ARTISTS -> library.tracksOfArtist(row.filter)
-                Section.ALBUM_ARTISTS -> library.tracksOfAlbumArtist(row.filter)
-                Section.PLAYLISTS -> library.tracksOfPlaylist(row.filter)
-                else -> emptyList()
-            }
-            tracks.forEach { if (it.path.isNotEmpty()) out.add(it.path) }
+        if (staleWhileSelecting) {
+            staleWhileSelecting = false
+            load(keepScroll = true)
         }
-        return out.toList()
     }
 
-    private fun actOnSelection(action: Action) {
+    private fun actOnSelection(action: Selection.Action) {
         val main = activity as? MainActivity ?: return
         val positions = adapter.selected
         if (positions.isEmpty()) return
         val playlistName = opened?.filter?.removePrefix("M3U_").orEmpty()
+        val rows = positions.mapNotNull { adapter.rowAt(it) }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val paths = withContext(Dispatchers.IO) { gatherPaths(positions) }
+            val paths = withContext(Dispatchers.IO) { Selection.paths(rows) { section } }
             if (paths.isEmpty()) return@launch
             when (action) {
-                Action.QUEUE -> {
+                Selection.Action.QUEUE -> {
                     stopSelection()
                     main.perform(done = getString(R.string.done_queue)) { it.selection("queue_next", paths) }
                 }
-                Action.FAVOURITES_ADD -> {
+                Selection.Action.FAVOURITES_ADD -> {
                     stopSelection()
-                    // The player stars them asynchronously: the Favourites tab
-                    // reloads after a delay.
+                    // The player stars them on a thread of its own; the
+                    // favourites revision in the state brings the Favourites
+                    // tab up to date, and the delayed notice covers a player
+                    // that does not send one.
                     main.perform(done = getString(R.string.done_fav), then = { main.favouritesChanged(1500) }) {
                         it.selection("favourites_add", paths)
                     }
                 }
-                Action.FAVOURITES_REMOVE -> {
+                Selection.Action.FAVOURITES_REMOVE -> {
                     stopSelection()
                     main.perform(done = getString(R.string.done_removed), then = { main.favouritesChanged() }) {
                         it.selection("favourites_remove", paths)
                     }
                 }
-                Action.PLAYLIST_REMOVE -> {
+                Selection.Action.PLAYLIST_REMOVE -> {
                     if (playlistName.isEmpty()) return@launch
-                    main.perform(done = getString(R.string.done_removed), then = { adapter.removeAt(positions); updateHeader() }) {
+                    main.perform(
+                        done = getString(R.string.done_removed),
+                        then = {
+                            adapter.removeAt(positions)
+                            stopSelection()
+                        },
+                    ) {
                         it.selection("playlist_remove", paths, playlistName)
                     }
                 }
-                Action.PLAYLIST_ADD -> pickPlaylist { name ->
+                Selection.Action.PLAYLIST_ADD -> Selection.pickPlaylist(
+                    requireContext(),
+                    viewLifecycleOwner.lifecycleScope,
+                ) { name ->
                     stopSelection()
                     main.perform(done = getString(R.string.done_playlist)) {
                         it.selection("playlist_add", paths, name)
@@ -560,51 +584,6 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
                 }
             }
         }
-    }
-
-    /**
-     * Which playlist: the player's, as the index has them, or a new one by
-     * name -- the player makes it when it is not there.
-     */
-    private fun pickPlaylist(chosen: (String) -> Unit) {
-        val context = context ?: return
-        viewLifecycleOwner.lifecycleScope.launch {
-            val names = withContext(Dispatchers.IO) {
-                Session.library?.playlists().orEmpty().map { it.title }
-            }
-            val items = (listOf(getString(R.string.playlist_new)) + names).toTypedArray()
-            androidx.appcompat.app.AlertDialog.Builder(context)
-                .setTitle(R.string.sel_playlist_add)
-                .setItems(items) { _, which ->
-                    if (which == 0) askPlaylistName(chosen) else chosen(names[which - 1])
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-        }
-    }
-
-    private fun askPlaylistName(chosen: (String) -> Unit) {
-        val context = context ?: return
-        val field = android.widget.EditText(context).apply {
-            setHint(R.string.playlist_name_hint)
-            setSingleLine(true)
-        }
-        val box = android.widget.FrameLayout(context).apply {
-            val side = (20 * resources.displayMetrics.density).toInt()
-            setPadding(side, side / 2, side, 0)
-            addView(field)
-        }
-        androidx.appcompat.app.AlertDialog.Builder(context)
-            .setTitle(R.string.playlist_new)
-            .setView(box)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                // Strips the characters a file name cannot hold; the player
-                // refuses them too.
-                val name = field.text.toString().trim().replace(Regex("[/\\\\:*?\"<>|]"), "")
-                if (name.isNotEmpty()) chosen(name)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
     }
 
     // -----------------------------------------------------------------------
@@ -678,7 +657,7 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
     private fun rowsFor(library: Library, category: Row?): List<Row> = when (section) {
         Section.FOLDERS -> emptyList()
         Section.TRACKS -> library.tracks()
-        Section.FAVOURITES -> favourites(library)
+        Section.FAVOURITES -> LiveLists.favourites(library)
         Section.ALBUMS ->
             if (category == null) library.albums() else library.tracksOfAlbum(category.filter)
         Section.ARTISTS ->
@@ -686,38 +665,6 @@ class BrowseFragment : Fragment(), MainActivity.LibraryListener {
         Section.ALBUM_ARTISTS ->
             if (category == null) library.albumArtists() else library.tracksOfAlbumArtist(category.filter)
         Section.PLAYLISTS ->
-            if (category == null) library.playlists() else library.tracksOfPlaylist(category.filter)
+            if (category == null) LiveLists.playlists(library) else LiveLists.playlistTracks(library, category.filter)
     }
-
-    /**
-     * Favourites come from the player, so recent stars are included; when it
-     * does not answer, the downloaded index's list is used.
-     *
-     * The player's answer carries path, name and artist; album and the artwork
-     * fields the thumbnail key needs are filled in from the index.
-     */
-    private fun favourites(library: Library): List<Row> {
-        val fresh = try {
-            Session.client?.favourites()
-        } catch (e: Exception) {
-            null
-        }
-        if (fresh == null) {
-            return library.favourites()
-        }
-        val known = library.tracksByPaths(fresh.map { it.path })
-        // The player sends them newest first; its own list shows oldest first
-        // unless reversed.
-        val ordered = if (Session.sort.favouritesReversed) fresh else fresh.asReversed()
-        return ordered.map { row ->
-            val indexed = known[row.path] ?: return@map row
-            row.copy(
-                album = indexed.album,
-                artPath = indexed.artPath,
-                artMtime = indexed.artMtime,
-                artSize = indexed.artSize,
-            )
-        }
-    }
-
 }

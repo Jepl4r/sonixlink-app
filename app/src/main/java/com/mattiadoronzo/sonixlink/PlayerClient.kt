@@ -125,6 +125,9 @@ class PlayerClient(val host: String, val port: Int = DEFAULT_PORT) {
             scanCount = json.optInt("scan_count", 0),
             tracks = json.optInt("tracks", 0),
             sort = SortPrefs.fromJson(json.optJSONObject("sort")),
+            albumArtist = json.optString("album_artist", ""),
+            favouritesRevision = json.optLong("favourites_revision", -1),
+            playlistsRevision = json.optLong("playlists_revision", -1),
         )
     }
 
@@ -200,6 +203,47 @@ class PlayerClient(val host: String, val port: Int = DEFAULT_PORT) {
             out.add(
                 Row(
                     title = item.optString("name", "").ifEmpty { path.substringAfterLast('/') },
+                    subtitle = item.optString("artist", ""),
+                    path = path,
+                )
+            )
+        }
+        return out
+    }
+
+    /**
+     * The playlists as they stand on the player: names and track counts, in the
+     * same rows [Library.playlists] makes from the index. Throws on a player
+     * without the route.
+     */
+    fun playlists(): List<Row> {
+        val json = JSONObject(request("/api/playlists"))
+        val array = json.optJSONArray("playlists") ?: return emptyList()
+        val out = ArrayList<Row>(array.length())
+        for (i in 0 until array.length()) {
+            val item = array.optJSONObject(i) ?: continue
+            val name = item.optString("name", "")
+            if (name.isEmpty()) continue
+            out.add(Row(title = name, subtitle = "", filter = "M3U_$name", count = item.optInt("count", 0)))
+        }
+        return out
+    }
+
+    /**
+     * One playlist's tracks in its order, as the player has them now. Rows
+     * carry path, title and artist only. Throws on a player without the route.
+     */
+    fun playlistTracks(name: String): List<Row> {
+        val json = JSONObject(request("/api/playlist?name=" + URLEncoder.encode(name, "UTF-8")))
+        val array = json.optJSONArray("tracks") ?: return emptyList()
+        val out = ArrayList<Row>(array.length())
+        for (i in 0 until array.length()) {
+            val item = array.optJSONObject(i) ?: continue
+            val path = item.optString("path", "")
+            if (path.isEmpty()) continue
+            out.add(
+                Row(
+                    title = item.optString("title", "").ifEmpty { path.substringAfterLast('/') },
                     subtitle = item.optString("artist", ""),
                     path = path,
                 )

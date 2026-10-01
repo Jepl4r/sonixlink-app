@@ -97,8 +97,28 @@ class RowAdapter(
         }
 
     /**
+     * The playing track, for the playmark. A track row is marked when its path
+     * is this one's; a category row when [marksCategory] says it holds it.
+     * Left empty in the queue, which marks by [highlightIndex] and
+     * [highlightPath] instead.
+     */
+    var playing: PlayerState = PlayerState.EMPTY
+        set(value) {
+            val old = field
+            field = value
+            if (old.path != value.path || old.album != value.album || old.artist != value.artist ||
+                old.albumArtist != value.albumArtist
+            ) {
+                notifyItemRangeChanged(0, items.size)
+            }
+        }
+
+    /** Whether a category row holds the playing track: an album by name, an artist by artist. */
+    var marksCategory: ((Row, PlayerState) -> Boolean)? = null
+
+    /**
      * Rebinds every row, for when the accent changes and the data does not:
-     * the playing track's title is drawn in the accent.
+     * the playing track's title and the playmark are drawn in the accent.
      */
     @Suppress("NotifyDataSetChanged")
     fun repaint() {
@@ -259,6 +279,20 @@ class RowAdapter(
             position == highlightIndex
         } else {
             highlightPath.isNotEmpty() && row.path == highlightPath
+        }
+        val marked = playing || when {
+            row.kind != Row.Kind.ROW -> false
+            row.isTrack -> this.playing.path.isNotEmpty() && row.path == this.playing.path
+            else -> this.playing.hasTrack && marksCategory?.invoke(row, this.playing) == true
+        }
+        if (marked) {
+            views.playmark.background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = 2 * context.resources.displayMetrics.density
+                setColor(Session.accent)
+            }
+            views.playmark.visibility = View.VISIBLE
+        } else {
+            views.playmark.visibility = View.GONE
         }
         views.title.setTextColor(
             if (playing) {
