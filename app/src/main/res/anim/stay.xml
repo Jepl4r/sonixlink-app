@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The screen underneath holds still while the other rises. -->
+<!-- Keeps the screen underneath still while the now-playing screen slides over it. -->
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:duration="260"
     android:fromYDelta="0%p"

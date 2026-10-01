@@ -11,14 +11,8 @@ import androidx.core.content.ContextCompat
 import com.mattiadoronzo.sonixlink.databinding.VolumePillBinding
 
 /**
- * The volume pill, with everything it needs inside it: the phone's hardware
- * keys, the gap between one send and the next, and the countdown that takes it
- * away.
- *
- * One class rather than four copies: only the main screen and the now-playing
- * screen had one, each its own, and in the queue and the search the volume keys
- * went to the phone's ringer -- where no sound comes out, since the player is
- * what is playing.
+ * The volume pill shared by every screen: it handles the phone's volume keys,
+ * throttles the levels sent to the player, and hides itself after a pause.
  */
 class VolumePill(
     private val views: VolumePillBinding,
@@ -30,18 +24,21 @@ class VolumePill(
         /** One step per press, as on the player. */
         const val STEP = 1
 
-        /** Dragging produces dozens a second: one goes out every so often. */
+        /** Minimum gap between two sends while dragging. */
         const val SEND_MS = 100L
 
         const val HIDE_MS = 1600L
 
         /**
-         * The player takes a poll to apply it: until then the state coming back
-         * is the old one, and it must not drag the knob backwards.
+         * How long after a change the player's reported level is ignored: until
+         * the player applies it, the state still carries the old level.
          */
         const val HOLD_MS = 700L
 
-        /** Where the player changes icon and turns the number red. */
+        /**
+         * The player's loud threshold: from here the icon is the high one, and
+         * above it the number turns red.
+         */
         const val HIGH = 55
     }
 
@@ -58,14 +55,14 @@ class VolumePill(
         get() = views.root.visibility == View.VISIBLE
 
     init {
-        // A touch outside sends it away, like the player's own veil.
+        // A touch outside the scale hides it, as on the player.
         views.root.setOnClickListener { hide() }
 
         views.volumeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(bar: SeekBar, value: Int, fromUser: Boolean) {
                 if (!fromUser) return
                 number(value)
-                // The player follows the finger, not only where it lifts.
+                // Sent while dragging, not only on release.
                 queue(value)
                 keepUp()
             }
@@ -85,21 +82,20 @@ class VolumePill(
         accent()
     }
 
-    /** The scale's fill carries the accent chosen on the player. */
+    /** Tints the scale's fill with the player's accent. */
     fun accent() {
         views.volumeSeek.progressTintList = ColorStateList.valueOf(Session.accent)
     }
 
-    /** Call in onDestroy: the two delayed callbacks hold on to the screen. */
+    /** Call in onDestroy: the pending callbacks hold a reference to the screen. */
     fun release() {
         clock.removeCallbacks(hideLater)
         clock.removeCallbacks(flushLater)
     }
 
     /**
-     * The phone's volume keys drive the player. Returns true when the key was one
-     * of the two: the release is consumed as well, or the phone shows its own
-     * volume bar over ours.
+     * Turns the phone's volume keys into player volume steps. Returns true for
+     * either volume key, release included, or the system shows its own volume bar.
      */
     fun onKey(event: KeyEvent): Boolean {
         val code = event.keyCode
@@ -108,9 +104,9 @@ class VolumePill(
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
             val step = if (code == KeyEvent.KEYCODE_VOLUME_UP) STEP else -STEP
-            // The starting level is the pill's own while it is up:
-            // Session.state is rewritten by the poll every second, and five
-            // quick presses would come out as two or three steps.
+            // Steps from the pill's own level while it is shown: the poll
+            // overwrites Session.state with levels not yet applied, which
+            // would swallow quick presses.
             val from = if (showing) views.volumeSeek.progress else Session.state.volume
             val target = (from + step).coerceIn(0, 100)
             show(target)
@@ -132,9 +128,9 @@ class VolumePill(
     }
 
     /**
-     * Volume changed on the player shows here too, but not while a finger is on
-     * the scale or a value is waiting to go out: the player would answer with
-     * the old one and the knob would jump back.
+     * Shows the player's reported level, except while a finger is on the scale,
+     * a value is waiting to be sent, or within HOLD_MS of a change: the report
+     * may still carry the old level.
      */
     fun follow(level: Int) {
         if (!showing || touching || pending >= 0) return
@@ -143,12 +139,9 @@ class VolumePill(
         number(level)
     }
 
-    // -----------------------------------------------------------------------
-
     private fun keepUp() {
         clock.removeCallbacks(hideLater)
-        // Not while a finger is on the scale: the pill must not vanish from
-        // under whoever is using it.
+        // No countdown while a finger is on the scale.
         if (!touching) {
             clock.postDelayed(hideLater, HIDE_MS)
         }
@@ -157,8 +150,7 @@ class VolumePill(
     private fun number(level: Int) {
         val context = views.root.context
         views.volumeText.text = level.toString()
-        // Past the point where every step is loud the number turns red, which
-        // is what the player does.
+        // Red above HIGH, as on the player.
         views.volumeText.setTextColor(
             ContextCompat.getColor(
                 context,

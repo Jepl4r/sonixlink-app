@@ -13,14 +13,10 @@ import com.mattiadoronzo.sonixlink.databinding.RowItemBinding
  */
 class RowAdapter(
     private val categoryIcon: Int,
-    /**
-     * What goes on the left when there is no artwork: the section's icon, or
-     * nothing. Artists, album artists and playlists have no picture, and one
-     * icon repeated down the whole list is just noise.
-     */
+    /** What goes on the left when there is no artwork: the section's icon, or nothing. */
     var leading: Leading = Leading.ICON,
-    // The position comes with the row: in the queue the same track can appear
-    // twice, and looking it up by content would land on the first.
+    // Receives the position too: in the queue the same track can appear twice,
+    // so a lookup by content would land on the first.
     private val onClick: (Int, Row) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -33,10 +29,61 @@ class RowAdapter(
 
     private val items = ArrayList<Row>()
 
+    /** The row at [position], or null when out of range. */
+    fun rowAt(position: Int): Row? = items.getOrNull(position)
+
+    val rowCount: Int get() = items.size
+
+    // -----------------------------------------------------------------------
+    // Selection mode
+    // -----------------------------------------------------------------------
+
+    // As on the player: a long press starts it, a tap toggles a row, and a
+    // chosen row shows a tick in place of its chevron. Selections are list
+    // positions; the list's owner decides what each one stands for.
+
+    /** Called on a long press, with the row's position. Null: no selection here. */
+    var onLongPress: ((Int, Row) -> Unit)? = null
+
+    var selecting = false
+        private set
+    private val chosen = LinkedHashSet<Int>()
+
+    val selected: List<Int> get() = chosen.sorted()
+
+    @Suppress("NotifyDataSetChanged")
+    fun startSelection(first: Int) {
+        selecting = true
+        chosen.clear()
+        if (first in items.indices) chosen.add(first)
+        notifyDataSetChanged()
+    }
+
+    @Suppress("NotifyDataSetChanged")
+    fun stopSelection() {
+        selecting = false
+        chosen.clear()
+        notifyDataSetChanged()
+    }
+
+    /** Chooses the row or lets it go. Returns how many are chosen now. */
+    fun toggle(position: Int): Int {
+        if (!chosen.remove(position)) chosen.add(position)
+        notifyItemChanged(position)
+        return chosen.size
+    }
+
+    /** Takes rows out of the list (a removal the player has confirmed). */
+    @Suppress("NotifyDataSetChanged")
+    fun removeAt(positions: Collection<Int>) {
+        positions.sortedDescending().forEach { if (it in items.indices) items.removeAt(it) }
+        chosen.clear()
+        notifyDataSetChanged()
+    }
+
     /**
-     * The strip's letters and where each begins, worked out once when the list
-     * arrives. Deriving them row by row while a finger drags meant walking six
-     * thousand titles on every movement.
+     * The strip's letters and the position where each begins, computed once in
+     * [submit] so a drag along the strip never walks the list.
      */
     private val letterAt = LinkedHashMap<Char, Int>()
 
@@ -50,16 +97,45 @@ class RowAdapter(
         }
 
     /**
-     * Repaints rows already bound. For when a colour changes and the data does
-     * not: the playing track's title carries the accent, and a bound row keeps
-     * the old one until it comes back through here.
+     * Rebinds every row, for when the accent changes and the data does not:
+     * the playing track's title is drawn in the accent.
      */
     @Suppress("NotifyDataSetChanged")
     fun repaint() {
         notifyDataSetChanged()
     }
 
+    /**
+     * The playing row by its place in the list, for a list where the same
+     * track can appear twice (the queue). -1 leaves it to [highlightPath].
+     */
+    var highlightIndex: Int = -1
+        set(value) {
+            if (field != value) {
+                val old = field
+                field = value
+                if (old in items.indices) notifyItemChanged(old)
+                if (value in items.indices) notifyItemChanged(value)
+            }
+        }
+
+    /**
+     * Swaps in the rows from `at` onwards, leaving the rest and the scroll
+     * where they are: the queue fills its placeholders page by page this way.
+     */
+    fun replace(at: Int, rows: List<Row>) {
+        if (at < 0 || at >= items.size) return
+        val end = minOf(items.size, at + rows.size)
+        for (i in at until end) {
+            items[i] = rows[i - at]
+        }
+        notifyItemRangeChanged(at, end - at)
+    }
+
     fun submit(rows: List<Row>) {
+        // Positions chosen in the old rows mean nothing in the new ones.
+        selecting = false
+        chosen.clear()
         items.clear()
         items.addAll(rows)
         letterAt.clear()
@@ -71,6 +147,19 @@ class RowAdapter(
             }
         }
         notifyDataSetChanged()
+    }
+
+    /** Rebinds all rows when thumbnails arrive from the player. */
+    private val coversArrived: () -> Unit = { notifyItemRangeChanged(0, items.size) }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        Covers.watch(coversArrived)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        Covers.unwatch(coversArrived)
     }
 
     class Holder(val views: RowItemBinding) : RecyclerView.ViewHolder(views.root)
@@ -108,16 +197,29 @@ class RowAdapter(
         val context = views.root.context
 
         views.title.text = row.title
-        views.chevron.visibility = if (row.isTrack) View.GONE else View.VISIBLE
+        val isChosen = selecting && position in chosen
+        views.chevron.visibility =
+            if (selecting || row.isTrack || row.kind == Row.Kind.PENDING) View.GONE else View.VISIBLE
+        views.check.visibility = if (isChosen) View.VISIBLE else View.GONE
+        if (isChosen) {
+            views.check.imageTintList = android.content.res.ColorStateList.valueOf(Session.accent)
+            views.root.setBackgroundColor(
+                androidx.core.content.ContextCompat.getColor(context, R.color.surface)
+            )
+        } else {
+            // Back to the ripple the layout gives it.
+            val ripple = android.util.TypedValue()
+            context.theme.resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)
+            views.root.setBackgroundResource(ripple.resourceId)
+        }
 
-        // The thumbnails are ready and small: reading one costs a primary-key
-        // query and no decoding.
+        // Read on the main thread: a thumbnail is raw pixels behind a
+        // primary-key query, with no decoding.
         val covers = Session.covers
         val cover = when {
             covers == null -> null
-            // A track has its own thumbnail only if the player has actually
-            // drawn that row at least once. Failing that, its album's does
-            // just as well: it is the same picture.
+            // A track has its own thumbnail only once the player has drawn
+            // that row; until then the album's cover stands in.
             row.isTrack -> covers.forTrack(row.artPath, row.artMtime, row.artSize)
                 ?: covers.forAlbum(row.album)
             row.album.isNotEmpty() -> covers.forAlbum(row.album)
@@ -134,15 +236,14 @@ class RowAdapter(
             views.icon.visibility = if (leading == Leading.ICON) View.VISIBLE else View.GONE
             views.icon.setImageResource(
                 when {
-                    // A list that mixes kinds -- the search results -- says
-                    // row by row which icon it wants.
+                    // Lists that mix kinds, like search results, set the icon per row.
                     row.iconRes != 0 -> row.iconRes
                     row.isTrack -> R.drawable.ic_track
                     else -> categoryIcon
                 }
             )
-            // With neither artwork nor icon the square goes too: the title
-            // starts at the margin, as in a list of names.
+            // With neither artwork nor icon the square goes too, and the title
+            // starts at the margin.
             views.artwork.visibility = if (leading == Leading.ICON) View.VISIBLE else View.GONE
         }
 
@@ -154,7 +255,11 @@ class RowAdapter(
         views.subtitle.text = subtitle
         views.subtitle.visibility = if (subtitle.isEmpty()) View.GONE else View.VISIBLE
 
-        val playing = highlightPath.isNotEmpty() && row.path == highlightPath
+        val playing = if (highlightIndex >= 0) {
+            position == highlightIndex
+        } else {
+            highlightPath.isNotEmpty() && row.path == highlightPath
+        }
         views.title.setTextColor(
             if (playing) {
                 Session.accent
@@ -167,6 +272,19 @@ class RowAdapter(
             val at = holder.bindingAdapterPosition
             if (at != RecyclerView.NO_POSITION) {
                 onClick(at, items[at])
+            }
+        }
+        val longPress = onLongPress
+        if (longPress == null) {
+            views.root.setOnLongClickListener(null)
+            views.root.isLongClickable = false
+        } else {
+            views.root.setOnLongClickListener {
+                val at = holder.bindingAdapterPosition
+                if (at != RecyclerView.NO_POSITION) {
+                    longPress(at, items[at])
+                }
+                true
             }
         }
     }

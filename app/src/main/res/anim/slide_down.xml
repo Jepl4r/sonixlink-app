@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- And goes back down the same way. -->
+<!-- The now-playing screen slides back down to close. -->
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:duration="220"
     android:fromYDelta="0%p"

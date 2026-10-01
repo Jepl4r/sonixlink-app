@@ -11,10 +11,8 @@ import java.util.Locale
 /**
  * The last crash report.
  *
- * An app that closes itself on a phone with no cable to a computer leaves
- * nothing readable behind: logcat lives on the developer's machine. Here the
- * trace goes to a file, and on the next launch the app shows it and lets it be
- * copied, so the line that blew up is known rather than guessed at.
+ * An uncaught exception's stack trace is written to a file in filesDir, so the
+ * next launch can show it and let it be copied without logcat.
  */
 object CrashLog {
 
@@ -37,10 +35,9 @@ object CrashLog {
                 }
                 File(directory, FILE).writeText(text.toString())
             } catch (ignored: Throwable) {
-                // A report that cannot be written still leaves the crash itself,
-                // which beats swallowing both.
+                // A failed write must not hide the original crash.
             }
-            // A crash stays a crash: the system takes the process down as usual.
+            // Hand over to the previous handler so the process still dies as usual.
             previous?.uncaughtException(thread, error)
         }
     }

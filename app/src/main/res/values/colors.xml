@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The player's own colours: Adwaita dark, window #242424, cards #303030,
-     accent #3584e4. Copied from src/gui/theme.c, not picked by eye. -->
+<!-- The player's own colours (Adwaita dark: window #242424, cards #303030,
+     accent #3584e4), copied from src/gui/theme.c. -->
 <resources>
     <color name="screen_bg">#242424</color>
     <color name="surface">#303030</color>

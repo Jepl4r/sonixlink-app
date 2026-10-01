@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The search has a page of its own, as on the player: the field at the top
-     with the x that empties it, and the results below, split by category. -->
+<!-- The search page, as on the player: the field with a clear button at the
+     top, and the results below, grouped by category. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -107,7 +107,8 @@
         </FrameLayout>
     </LinearLayout>
 
-    <!-- As in the queue: the volume goes up while searching too. -->
+    <!-- The volume pill, shown when the volume keys change the player's
+         volume. -->
     <include
         android:id="@+id/volume"
         layout="@layout/volume_pill" />

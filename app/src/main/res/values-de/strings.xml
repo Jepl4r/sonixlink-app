@@ -4,6 +4,11 @@
     <string name="connect_none">Kein Player gefunden. Prüfe, ob SonixLink im Player eingeschaltet ist und ob das Telefon im selben WLAN ist.</string>
     <string name="connect_rescan">Erneut suchen</string>
     <string name="connect_failed">Keine Antwort: %1$s</string>
+    <string name="connect_bluetooth">Über Bluetooth verbinden</string>
+    <string name="bluetooth_pick">Gekoppelte Geräte</string>
+    <string name="bluetooth_none">Kein gekoppeltes Gerät. Schalte Bluetooth und SonixLink am Player ein und kopple ihn dann in den Bluetooth-Einstellungen des Telefons.</string>
+    <string name="bluetooth_off">Bluetooth ist am Telefon ausgeschaltet.</string>
+    <string name="bluetooth_denied">Ohne die Bluetooth-Berechtigung kann die App den Player nicht erreichen.</string>
 
     <string name="crash_title">Die App hat sich beendet</string>
     <string name="crash_copy">Kopieren</string>
@@ -20,6 +25,7 @@
     <string name="tab_album_artists">Album-Interpreten</string>
     <string name="tab_playlists">Wiedergabelisten</string>
     <string name="tab_favourites">Favoriten</string>
+    <string name="tab_folders">Ordner</string>
 
     <string name="downloading">Index wird geladen…</string>
     <string name="downloading_progress">Index wird geladen… %1$d%%</string>
@@ -42,6 +48,29 @@
     <string name="sync_unreachable">Der Player antwortet nicht.</string>
     <string name="sync_no_library">Index konnte nicht geladen werden.</string>
     <string name="retry">Erneut versuchen</string>
+
+    <string name="notification_channel">Wiedergabe auf dem Player</string>
+    <string name="notification_channel_description">Der Titel, der auf dem Player läuft, mit seinen Steuerelementen.</string>
+    <string name="notification_connected">Verbunden mit %1$s</string>
+    <string name="notification_disconnect">Trennen</string>
+
+    <string name="cd_play_menu">Alles abspielen</string>
+    <string name="play_random">In zufälliger Reihenfolge abspielen</string>
+    <string name="play_sequence">Der Reihe nach abspielen</string>
+    <string name="play_random_track">Zufälligen Titel zur Warteschlange</string>
+    <string name="selected_count">%1$d ausgewählt</string>
+    <string name="sel_queue">Zur Warteschlange hinzufügen</string>
+    <string name="sel_fav_add">Zu den Favoriten hinzufügen</string>
+    <string name="sel_playlist_add">Zu Wiedergabeliste hinzufügen</string>
+    <string name="sel_fav_remove">Aus den Favoriten entfernen</string>
+    <string name="sel_playlist_remove">Aus der Wiedergabeliste entfernen</string>
+    <string name="done_queue">Zur Warteschlange hinzugefügt</string>
+    <string name="done_fav">Zu den Favoriten hinzugefügt</string>
+    <string name="done_playlist">Titel hinzugefügt</string>
+    <string name="done_removed">Titel entfernt</string>
+    <string name="playlist_new">Neue Wiedergabeliste</string>
+    <string name="playlist_name_hint">Name der Wiedergabeliste</string>
+    <string name="sync_progress">%1$s von %2$s</string>
 
     <string name="queue_title">Warteschlange</string>
     <string name="queue_position">%1$d von %2$d</string>

@@ -21,27 +21,23 @@ import kotlinx.coroutines.withContext
 /**
  * The playing track, full screen.
  *
- * The artwork here is the real thing, not the thumbnail: the player sends it
- * whole and untouched (`/api/art`), and the phone, which has cycles to spare,
- * decodes it. The background is the same image, blurred, as on the player.
+ * The artwork is the full-size image from `/api/art`, decoded on the phone, not
+ * the list thumbnail. The background is the same image, blurred, as on the player.
  */
 class NowPlayingActivity : AppCompatActivity() {
 
     companion object {
         private const val POLL_MS = 1000L
 
-        /**
-         * Past this the decoder scales down. The measure is the screen's own:
-         * artwork wider than the display is megabytes of pixels nobody will see.
-         */
+        /** How often the clock and the bar advance between reads. */
+        private const val TICK_MS = 250L
+
+        /** Decode size limit in pixels when the screen size is unknown. */
         private const val MAX_SIDE_FALLBACK = 1080
 
         /**
-         * The background shrinks to here and is then really blurred. At
-         * twenty-four pixels the squares showed: small enough to cost nothing,
-         * but stretched full screen that is not a blur, it is a mosaic. A
-         * hundred and twenty-eight plus three box passes give what the player
-         * puts behind its artwork.
+         * The background is scaled to this side and then box-blurred. Much
+         * smaller and the squares show once stretched full screen.
          */
         private const val BLUR_SIDE = 128
         private const val BLUR_PASSES = 3
@@ -53,19 +49,18 @@ class NowPlayingActivity : AppCompatActivity() {
     /** The track whose artwork is already on screen. */
     private var artPath = ""
 
-    /** The one with a request in flight, so as not to make two. */
+    /** The track with an artwork request in flight. */
     private var artAsked = ""
 
-    /** Tracks that have no artwork: not asked for once a second. */
+    /** Tracks the player reports as having no artwork; not asked for again. */
     private val artMissing = HashSet<String>()
 
     private var seeking = false
     private var seekHoldUntil = 0L
 
-    /** The volume pill, the same one every other page has. */
     private lateinit var volume: VolumePill
 
-    /** Kept in a field: the object itself is what removes itself. */
+    /** Kept in a field: unwatchAccent removes it by identity. */
     private val accentWatch = { applyAccent() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +68,7 @@ class NowPlayingActivity : AppCompatActivity() {
         views = ActivityNowPlayingBinding.inflate(layoutInflater)
         setContentView(views.root)
 
-        // Before the early return: the volume keys arrive regardless.
+        // Before the early return: dispatchKeyEvent uses it regardless.
         volume = VolumePill(views.volume) { level -> send { it.setVolume(level) } }
 
         if (Session.client == null) {
@@ -81,12 +76,19 @@ class NowPlayingActivity : AppCompatActivity() {
             return
         }
 
-        // Marquee: they scroll themselves when they do not fit, as on the player.
+        // Selected so the marquee scrolls text that does not fit.
         views.trackTitle.isSelected = true
         views.trackArtist.isSelected = true
 
         applyAccent()
         wireControls()
+
+        // Shows the last state read at once: the first read of this screen can
+        // queue behind others on a Bluetooth link.
+        if (Session.state.hasTrack) {
+            show(Session.state)
+            showArt(Session.state.path)
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -96,25 +98,31 @@ class NowPlayingActivity : AppCompatActivity() {
                 }
             }
         }
+        // The clock runs in its own loop so it keeps moving while a read is
+        // held up on the link.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    showProgress()
+                    delay(TICK_MS)
+                }
+            }
+        }
     }
 
     @Suppress("DEPRECATION")
     override fun finish() {
         super.finish()
         if (dismissing) {
-            // The sheet has already gone down behind the finger: the window
-            // animation would put it back at the top to send it down again, and
-            // the jump would show.
+            // The sheet is already off screen; a window animation would
+            // restart it from the top.
             overridePendingTransition(0, 0)
         } else {
-            // It goes back down the way it came up.
             overridePendingTransition(R.anim.stay, R.anim.slide_down)
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Dragging down
-    // -----------------------------------------------------------------------
+    // --- Dragging down ---
 
     private var downX = 0f
     private var downY = 0f
@@ -124,9 +132,9 @@ class NowPlayingActivity : AppCompatActivity() {
     private val slop by lazy { android.view.ViewConfiguration.get(this).scaledTouchSlop }
 
     /**
-     * A finger going down takes the screen with it, and past a fifth of the
-     * height closes it. Here rather than on a listener at the root because the
-     * children take the touches: from here they are all seen, before them.
+     * A downward drag moves the sheet with the finger; released past a fifth of
+     * the height, it closes the screen. Handled here so the gesture is seen
+     * before the children consume the touches.
      */
     override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -134,8 +142,7 @@ class NowPlayingActivity : AppCompatActivity() {
                 downX = event.rawX
                 downY = event.rawY
                 dragging = false
-                // Something under the finger drags on its own, or the volume
-                // pill is up: those come first.
+                // The seek bar and the open volume pill keep their own drags.
                 dragBlocked = dismissing ||
                     volume.showing ||
                     over(views.progressSeek, event)
@@ -146,9 +153,8 @@ class NowPlayingActivity : AppCompatActivity() {
                     val down = event.rawY - downY
                     if (down > slop && down > kotlin.math.abs(event.rawX - downX)) {
                         dragging = true
-                        // The children already have the touch: without a cancel
-                        // the button under the finger stays pressed all the way
-                        // down and fires on release.
+                        // Cancels the touch for the children, or the button
+                        // under the finger stays pressed and fires on release.
                         val cancel = android.view.MotionEvent.obtain(event)
                         cancel.action = android.view.MotionEvent.ACTION_CANCEL
                         super.dispatchTouchEvent(cancel)
@@ -207,16 +213,13 @@ class NowPlayingActivity : AppCompatActivity() {
         volume.release()
     }
 
-    // -----------------------------------------------------------------------
-
     private fun applyAccent() {
         val accent = Session.accent
         Accent.circleButton(views.playButton, 64)
         views.progressSeek.progressTintList = android.content.res.ColorStateList.valueOf(accent)
         volume.accent()
 
-        // The player's knob: round, filled with the accent, with the white ring
-        // around it.
+        // The player's knob: an accent-filled circle with a white ring.
         val ring = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(accent)
@@ -229,10 +232,7 @@ class NowPlayingActivity : AppCompatActivity() {
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-    /**
-     * The phone's keys drive the player from this screen too: without this they
-     * turned up the ringer and the player stayed where it was.
-     */
+    /** The phone's volume keys set the player's volume, not the ringer's. */
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
         volume.onKey(event) || super.dispatchKeyEvent(event)
 
@@ -241,16 +241,16 @@ class NowPlayingActivity : AppCompatActivity() {
         views.prevButton.setOnClickListener { send { it.previous() } }
         views.nextButton.setOnClickListener { send { it.next() } }
         views.modeButton.setOnClickListener {
-            val next = Session.state.mode.next()
-            Session.state = Session.state.copy(mode = next)
+            val next = Session.heldMode.resolve(Session.state.mode).next()
+            Session.heldMode.set(next)
             showMode(next)
             send { it.setMode(next) }
         }
         views.favouriteButton.setOnClickListener {
             val path = Session.state.path
             if (path.isEmpty()) return@setOnClickListener
-            val starred = !Session.state.favourite
-            Session.state = Session.state.copy(favourite = starred)
+            val starred = !shownFavourite(Session.state)
+            Session.heldFavourite.set(path to starred)
             showFavourite(starred)
             send { it.setFavourite(path, starred) }
         }
@@ -276,8 +276,8 @@ class NowPlayingActivity : AppCompatActivity() {
                 val duration = Session.state.duration
                 if (duration <= 0) return
                 val seconds = (bar.progress.toLong() * duration / 1000).toInt()
-                // The player takes a moment to actually move: until then the bar
-                // stays where the finger left it.
+                // The player takes a moment to seek; the bar holds where the
+                // finger left it until then.
                 seekHoldUntil = android.os.SystemClock.uptimeMillis() + 1200
                 send { it.seek(seconds) }
             }
@@ -291,14 +291,12 @@ class NowPlayingActivity : AppCompatActivity() {
                 try {
                     action(client)
                 } catch (e: Exception) {
-                    // The next poll will say how it really went.
+                    // The next poll shows the real state.
                 }
             }
             refresh()
         }
     }
-
-    // -----------------------------------------------------------------------
 
     private suspend fun refresh() {
         val client = Session.client ?: return
@@ -310,13 +308,13 @@ class NowPlayingActivity : AppCompatActivity() {
             }
         } ?: return
         Session.state = state
-        // The accent can change while this screen is in front: the other one's
-        // poll is stopped, so this one picks it up.
+        // The other screens' polls are stopped while this one is in front, so
+        // it picks up accent changes for all of them.
         if (state.accent.isNotEmpty()) {
             val color = Session.parseAccent(state.accent)
             if (color != Session.accent) {
-                // Recolouring is the watcher's job: this screen is the only one
-                // polling while it is in front, but there are others beneath.
+                // Setting Session.accent notifies the watchers, which recolour
+                // this screen and the ones beneath it.
                 Session.accent = color
                 val text = state.accent
                 lifecycleScope.launch(Dispatchers.IO) { Settings.rememberAccent(this@NowPlayingActivity, text) }
@@ -326,7 +324,45 @@ class NowPlayingActivity : AppCompatActivity() {
         showArt(state.path)
     }
 
+    /** The star as shown: a change made here wins until the player reports it. */
+    private fun shownFavourite(state: PlayerState): Boolean {
+        val (path, starred) = Session.heldFavourite.resolve(state.path to state.favourite)
+        return if (path == state.path) starred else state.favourite
+    }
+
+    /** The last state read and its uptime, for the clock to run on between reads. */
+    private var shownState: PlayerState = PlayerState.EMPTY
+    private var shownAt = 0L
+
+    /**
+     * The current position in seconds: the last read plus the time elapsed
+     * since, while playing, capped at the duration. Reads arrive at most once
+     * a second, later over Bluetooth.
+     */
+    private fun livePosition(): Long {
+        val state = shownState
+        var seconds = state.position.toLong()
+        if (state.isPlaying && shownAt > 0) {
+            seconds += (android.os.SystemClock.uptimeMillis() - shownAt) / 1000
+        }
+        return if (state.duration > 0) seconds.coerceAtMost(state.duration.toLong()) else seconds
+    }
+
+    private fun showProgress() {
+        if (seeking || android.os.SystemClock.uptimeMillis() < seekHoldUntil) return
+        val state = shownState
+        val position = livePosition()
+        views.progressSeek.progress = if (state.duration > 0) {
+            (position * 1000 / state.duration).toInt().coerceIn(0, 1000)
+        } else {
+            0
+        }
+        views.elapsed.text = clock(position)
+    }
+
     private fun show(state: PlayerState) {
+        shownState = state
+        shownAt = android.os.SystemClock.uptimeMillis()
         setText(views.trackTitle, state.title.ifEmpty { state.path.substringAfterLast('/') })
         setText(
             views.trackArtist,
@@ -334,32 +370,29 @@ class NowPlayingActivity : AppCompatActivity() {
         )
 
         views.playButton.setImageResource(if (state.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-        showMode(state.mode)
-        showFavourite(state.favourite)
+        showMode(Session.heldMode.resolve(state.mode))
+        showFavourite(shownFavourite(state))
 
-        if (!seeking && android.os.SystemClock.uptimeMillis() >= seekHoldUntil) {
-            views.progressSeek.progress = if (state.duration > 0) {
-                (state.position.toLong() * 1000 / state.duration).toInt().coerceIn(0, 1000)
-            } else {
-                0
-            }
-            views.elapsed.text = clock(state.position.toLong())
-        }
+        showProgress()
         views.total.text = clock(state.duration.toLong())
 
         volume.follow(state.volume)
 
-        views.queuePosition.text = if (state.queuePosition >= 0 && state.queueCount > 0) {
-            getString(R.string.queue_position, state.queuePosition + 1, state.queueCount)
-        } else {
-            ""
+        // The player's own "4/12": the place in the shuffled order under
+        // shuffle, empty for a single track or a book.
+        views.queuePosition.text = when {
+            state.displayCount > 0 && state.displayPosition > 0 ->
+                getString(R.string.queue_position, state.displayPosition, state.displayCount)
+            state.displayCount == 0 -> ""
+            state.queuePosition >= 0 && state.queueCount > 0 ->
+                getString(R.string.queue_position, state.queuePosition + 1, state.queueCount)
+            else -> ""
         }
     }
 
     /**
-     * Writing into a TextView restarts the marquee from the beginning, even when
-     * the text is the same as before. The poll put the title back once a second:
-     * it scrolled for half a second and returned to the start, forever.
+     * Sets the text only when it differs: any write restarts the marquee, even
+     * with the same text, and the poll writes once a second.
      */
     private fun setText(view: android.widget.TextView, text: String) {
         if (view.text?.toString() != text) {
@@ -394,14 +427,47 @@ class NowPlayingActivity : AppCompatActivity() {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // The artwork
-    // -----------------------------------------------------------------------
+    // --- The artwork ---
+
+    /** The track the stand-in on screen belongs to. */
+    private var standInPath = ""
+
+    /**
+     * Shows the cached list thumbnail while the full artwork loads, so the
+     * previous track's cover does not stay under the new title.
+     */
+    private fun showStandIn(path: String) {
+        if (path == standInPath) return
+        standInPath = path
+        lifecycleScope.launch {
+            val pair = withContext(Dispatchers.IO) {
+                try {
+                    val row = Session.library?.tracksByPaths(listOf(path))?.get(path) ?: return@withContext null
+                    val thumb = Session.covers?.forTrack(row.artPath, row.artMtime, row.artSize)
+                        ?: Session.covers?.forAlbum(row.album)
+                        ?: return@withContext null
+                    thumb to blur(thumb)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            // Only if the track is unchanged and its full artwork is not shown yet.
+            if (Session.state.path != path || artPath == path || standInPath != path) return@launch
+            if (pair != null) {
+                views.cover.setImageBitmap(pair.first)
+                views.backdrop.setImageBitmap(pair.second)
+                views.coverPlaceholder.visibility = View.GONE
+            } else {
+                views.cover.setImageDrawable(null)
+                views.backdrop.setImageDrawable(null)
+                views.coverPlaceholder.visibility = View.VISIBLE
+            }
+        }
+    }
 
     private fun showArt(path: String) {
-        // `artPath` moves only when the image is really there: a request that
-        // went wrong has to be worth making again next round, rather than leaving
-        // that track blank for its whole length.
+        // `artPath` is set only once the image is shown, so a failed request
+        // is retried on the next poll.
         if (path == artPath || path == artAsked || path in artMissing) return
         artAsked = path
         if (path.isEmpty()) {
@@ -413,25 +479,32 @@ class NowPlayingActivity : AppCompatActivity() {
         }
 
         val client = Session.client ?: return
+        showStandIn(path)
         lifecycleScope.launch {
+            // Only a "no artwork" answer from the player is remembered; a failed
+            // request is made again on the next poll.
+            var failed = false
             val pair = withContext(Dispatchers.IO) {
                 try {
-                    val bytes = client.artwork(path) ?: return@withContext null
+                    // Shared with the notification; skipped if the track has
+                    // changed before its turn (see Artwork).
+                    val bytes = Artwork.get(client, path) { Session.state.path == path }
+                        ?: return@withContext null
                     val full = decode(bytes) ?: return@withContext null
                     full to blur(full)
                 } catch (e: Exception) {
+                    failed = true
                     null
                 } catch (e: OutOfMemoryError) {
-                    // Huge artwork must not take the app with it: without it the
-                    // icon remains, and the track plays all the same.
+                    // Oversized artwork leaves the placeholder instead of crashing.
                     null
                 }
             }
             artAsked = ""
             // The track can have changed between request and answer.
             if (Session.state.path != path) return@launch
+            if (failed) return@launch
             if (pair == null) {
-                // The player has answered that there is none: do not ask again.
                 artMissing.add(path)
                 views.cover.setImageDrawable(null)
                 views.backdrop.setImageDrawable(null)
@@ -445,7 +518,7 @@ class NowPlayingActivity : AppCompatActivity() {
         }
     }
 
-    /** Decoded down: 3000-pixel artwork is no use to a 1080-pixel screen. */
+    /** Decodes with a power-of-two sample size so the longer side fits the screen. */
     private fun decode(bytes: ByteArray): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
@@ -467,14 +540,13 @@ class NowPlayingActivity : AppCompatActivity() {
     }
 
     /**
-     * The background: the artwork scaled down and then run three times through a
-     * box blur. On 128x128 that is a few tens of thousands of additions -- no
-     * RenderEffect, which is Android 12 and up, and no RenderScript, which has
-     * been deprecated for years.
+     * The background: the artwork scaled to BLUR_SIDE and box-blurred
+     * BLUR_PASSES times, in plain Kotlin (RenderEffect needs Android 12,
+     * RenderScript is deprecated).
      */
     private fun blur(source: Bitmap): Bitmap {
         // Always copy: createScaledBitmap returns the source when the size
-        // matches, and what BitmapFactory hands back is not writable.
+        // matches, and a BitmapFactory bitmap is not mutable.
         val small = Bitmap.createScaledBitmap(source, BLUR_SIDE, BLUR_SIDE, true)
             .copy(Bitmap.Config.ARGB_8888, true) ?: return source
         val pixels = IntArray(BLUR_SIDE * BLUR_SIDE)
@@ -486,7 +558,7 @@ class NowPlayingActivity : AppCompatActivity() {
         return small
     }
 
-    /** A running mean along a row and then a column: two passes, not r*r. */
+    /** A separable box blur: the mean along each row, then along each column. */
     private fun boxBlur(pixels: IntArray, width: Int, height: Int, radius: Int) {
         val temp = IntArray(pixels.size)
         blurAxis(pixels, temp, width, height, radius, horizontal = true)

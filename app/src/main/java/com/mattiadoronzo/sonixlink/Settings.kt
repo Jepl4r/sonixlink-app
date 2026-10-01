@@ -3,19 +3,20 @@ package com.mattiadoronzo.sonixlink
 import android.content.Context
 
 /**
- * What is worth remembering between one launch and the next: the last player
- * that answered, so the second time the app goes straight in.
+ * Preferences kept between launches: the last player that answered, the stamps
+ * of the downloaded index and covers, the accent, and the notification prompt.
  */
 object Settings {
 
     private const val FILE = "sonixlink"
     private const val KEY_HOST = "last_host"
     private const val KEY_PORT = "last_port"
-    private const val KEY_DB_HOST = "db_host"
-    private const val KEY_DB_MTIME = "db_mtime"
-    private const val KEY_COVERS_HOST = "covers_host"
-    private const val KEY_COVERS_MTIME = "covers_mtime"
+    private const val KEY_DB_OWNER = "db_owner"
+    private const val KEY_DB_VERSION = "db_version"
+    private const val KEY_COVERS_OWNER = "covers_owner"
+    private const val KEY_COVERS_VERSION = "covers_version"
     private const val KEY_ACCENT = "accent"
+    private const val KEY_ASKED_NOTIFICATIONS = "asked_notifications"
 
     fun lastHost(context: Context): Pair<String, Int>? {
         val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -32,41 +33,52 @@ object Settings {
     }
 
     /**
-     * Whose index is on the phone, and from when. This is how a rescan on the
-     * player is noticed and the index fetched again on its own, rather than
-     * showing a stale library until someone presses refresh.
+     * The owner and version of the index on the phone: the player's serial
+     * (identical over Wi-Fi and Bluetooth) and the index's fingerprint. A
+     * mismatch with the player's means the index must be fetched again.
      */
-    fun databaseStamp(context: Context): Pair<String, Long> {
+    fun databaseStamp(context: Context): Pair<String, String> {
         val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-        return preferences.getString(KEY_DB_HOST, "").orEmpty() to preferences.getLong(KEY_DB_MTIME, 0)
+        return preferences.getString(KEY_DB_OWNER, "").orEmpty() to preferences.getString(KEY_DB_VERSION, "").orEmpty()
     }
 
-    fun rememberDatabaseStamp(context: Context, host: String, mtime: Long) {
+    fun rememberDatabaseStamp(context: Context, owner: String, version: String) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
-            .putString(KEY_DB_HOST, host)
-            .putLong(KEY_DB_MTIME, mtime)
+            .putString(KEY_DB_OWNER, owner)
+            .putString(KEY_DB_VERSION, version)
             .apply()
     }
 
-    fun coversStamp(context: Context): Pair<String, Long> {
+    fun coversStamp(context: Context): Pair<String, String> {
         val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-        return preferences.getString(KEY_COVERS_HOST, "").orEmpty() to preferences.getLong(KEY_COVERS_MTIME, 0)
+        return preferences.getString(KEY_COVERS_OWNER, "").orEmpty() to
+            preferences.getString(KEY_COVERS_VERSION, "").orEmpty()
     }
 
-    fun rememberCoversStamp(context: Context, host: String, mtime: Long) {
+    fun rememberCoversStamp(context: Context, owner: String, version: String) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
-            .putString(KEY_COVERS_HOST, host)
-            .putLong(KEY_COVERS_MTIME, mtime)
+            .putString(KEY_COVERS_OWNER, owner)
+            .putString(KEY_COVERS_VERSION, version)
             .apply()
     }
 
-    /** The accent last seen, so the app does not start blue and then change. */
+    /** The accent last seen, applied at startup before the player reports one. */
     fun accent(context: Context): String =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY_ACCENT, "").orEmpty()
 
     fun rememberAccent(context: Context, accent: String) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
             .putString(KEY_ACCENT, accent)
+            .apply()
+    }
+
+    /** Whether the notification permission has been asked for already. */
+    fun askedNotifications(context: Context): Boolean =
+        context.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEY_ASKED_NOTIFICATIONS, false)
+
+    fun rememberAskedNotifications(context: Context) {
+        context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_ASKED_NOTIFICATIONS, true)
             .apply()
     }
 

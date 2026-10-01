@@ -1,1 +1,1 @@
-# Nothing to keep: the app uses neither reflection nor serialisation.
+# No keep rules: the app uses neither reflection nor serialisation.

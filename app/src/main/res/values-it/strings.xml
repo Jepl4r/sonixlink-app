@@ -1,6 +1,6 @@
 <resources>
-    <!-- Italian is no longer the default: that is English, in values/, where
-         Android lands for every language it does not find here. -->
+    <!-- Italian strings. The default for other languages is English, in
+         values/. -->
     <string name="app_name">SonixLink</string>
 
     <string name="connect_title">Trova il lettore</string>
@@ -8,6 +8,11 @@
     <string name="connect_none">Nessun lettore trovato. Controlla che SonixLink sia acceso sul lettore e che il telefono sia sulla stessa rete Wi-Fi.</string>
     <string name="connect_rescan">Cerca di nuovo</string>
     <string name="connect_failed">Non risponde: %1$s</string>
+    <string name="connect_bluetooth">Connetti via Bluetooth</string>
+    <string name="bluetooth_pick">Dispositivi associati</string>
+    <string name="bluetooth_none">Nessun dispositivo associato. Accendi Bluetooth e SonixLink sul lettore, poi associalo al telefono dalle impostazioni Bluetooth del telefono.</string>
+    <string name="bluetooth_off">Il Bluetooth del telefono è spento.</string>
+    <string name="bluetooth_denied">Senza il permesso Bluetooth l\'app non può raggiungere il lettore.</string>
 
     <string name="crash_title">L\'app si è chiusa da sola</string>
     <string name="crash_copy">Copia</string>
@@ -24,6 +29,7 @@
     <string name="tab_album_artists">Artisti album</string>
     <string name="tab_playlists">Playlist</string>
     <string name="tab_favourites">Preferiti</string>
+    <string name="tab_folders">Cartelle</string>
 
     <string name="downloading">Scarico l\'indice…</string>
     <string name="downloading_progress">Scarico l\'indice… %1$d%%</string>
@@ -46,6 +52,29 @@
     <string name="sync_unreachable">Il lettore non risponde.</string>
     <string name="sync_no_library">Non sono riuscito a scaricare l\'indice.</string>
     <string name="retry">Riprova</string>
+
+    <string name="notification_channel">Riproduzione sul lettore</string>
+    <string name="notification_channel_description">Il brano in riproduzione sul lettore, con i suoi controlli.</string>
+    <string name="notification_connected">Connesso a %1$s</string>
+    <string name="notification_disconnect">Disconnetti</string>
+
+    <string name="cd_play_menu">Riproduci tutto</string>
+    <string name="play_random">Riproduci in ordine casuale</string>
+    <string name="play_sequence">Riproduci in sequenza</string>
+    <string name="play_random_track">Aggiungi brano casuale alla coda</string>
+    <string name="selected_count">%1$d selezionati</string>
+    <string name="sel_queue">Aggiungi alla coda</string>
+    <string name="sel_fav_add">Aggiungi ai preferiti</string>
+    <string name="sel_playlist_add">Aggiungi a playlist</string>
+    <string name="sel_fav_remove">Rimuovi dai preferiti</string>
+    <string name="sel_playlist_remove">Rimuovi dalla playlist</string>
+    <string name="done_queue">Aggiunti alla coda</string>
+    <string name="done_fav">Aggiunti ai preferiti</string>
+    <string name="done_playlist">Brani aggiunti</string>
+    <string name="done_removed">Brani rimossi</string>
+    <string name="playlist_new">Nuova playlist</string>
+    <string name="playlist_name_hint">Nome della playlist</string>
+    <string name="sync_progress">%1$s di %2$s</string>
 
     <string name="queue_title">Coda</string>
     <string name="queue_position">%1$d di %2$d</string>

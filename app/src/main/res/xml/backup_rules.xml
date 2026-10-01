@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- The index downloads again in moments: not worth backing up. -->
+    <!-- The library index is excluded: it is downloaded again from the player. -->
     <exclude domain="file" path="library.db" />
 </full-backup-content>

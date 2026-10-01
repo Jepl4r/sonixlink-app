@@ -4,6 +4,11 @@
     <string name="connect_none">Aucun lecteur trouvé. Vérifiez que SonixLink est activé sur le lecteur et que le téléphone est sur le même réseau Wi-Fi.</string>
     <string name="connect_rescan">Chercher à nouveau</string>
     <string name="connect_failed">Pas de réponse : %1$s</string>
+    <string name="connect_bluetooth">Connecter en Bluetooth</string>
+    <string name="bluetooth_pick">Appareils associés</string>
+    <string name="bluetooth_none">Aucun appareil associé. Active le Bluetooth et SonixLink sur le lecteur, puis associe-le depuis les réglages Bluetooth du téléphone.</string>
+    <string name="bluetooth_off">Le Bluetooth du téléphone est désactivé.</string>
+    <string name="bluetooth_denied">Sans l\'autorisation Bluetooth, l\'app ne peut pas joindre le lecteur.</string>
 
     <string name="crash_title">L\'application s\'est fermée toute seule</string>
     <string name="crash_copy">Copier</string>
@@ -20,6 +25,7 @@
     <string name="tab_album_artists">Artistes d\'album</string>
     <string name="tab_playlists">Listes de lecture</string>
     <string name="tab_favourites">Favoris</string>
+    <string name="tab_folders">Dossiers</string>
 
     <string name="downloading">Téléchargement de l\'index…</string>
     <string name="downloading_progress">Téléchargement de l\'index… %1$d%%</string>
@@ -42,6 +48,29 @@
     <string name="sync_unreachable">Le lecteur ne répond pas.</string>
     <string name="sync_no_library">Impossible de télécharger l\'index.</string>
     <string name="retry">Réessayer</string>
+
+    <string name="notification_channel">Lecture sur le lecteur</string>
+    <string name="notification_channel_description">Le morceau en cours sur le lecteur, avec ses commandes.</string>
+    <string name="notification_connected">Connecté à %1$s</string>
+    <string name="notification_disconnect">Déconnecter</string>
+
+    <string name="cd_play_menu">Tout lire</string>
+    <string name="play_random">Lire dans un ordre aléatoire</string>
+    <string name="play_sequence">Lire dans l\'ordre</string>
+    <string name="play_random_track">Ajouter un titre au hasard à la file</string>
+    <string name="selected_count">%1$d sélectionnés</string>
+    <string name="sel_queue">Ajouter à la file d\'attente</string>
+    <string name="sel_fav_add">Ajouter aux favoris</string>
+    <string name="sel_playlist_add">Ajouter à une liste de lecture</string>
+    <string name="sel_fav_remove">Retirer des favoris</string>
+    <string name="sel_playlist_remove">Retirer de la liste</string>
+    <string name="done_queue">Ajoutés à la file d\'attente</string>
+    <string name="done_fav">Ajoutés aux favoris</string>
+    <string name="done_playlist">Morceaux ajoutés</string>
+    <string name="done_removed">Morceaux retirés</string>
+    <string name="playlist_new">Nouvelle liste de lecture</string>
+    <string name="playlist_name_hint">Nom de la liste</string>
+    <string name="sync_progress">%1$s sur %2$s</string>
 
     <string name="queue_title">File d\'attente</string>
     <string name="queue_position">%1$d sur %2$d</string>

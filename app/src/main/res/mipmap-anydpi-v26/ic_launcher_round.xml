@@ -3,6 +3,6 @@
     <background android:drawable="@mipmap/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
     <!-- The themed icon on Android 13 and up: the foreground is a white glyph
-         on nothing, which is exactly what the system recolours. -->
+         on a transparent background, which the system recolours. -->
     <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

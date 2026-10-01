@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Converted from Sonix Player's own star x icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="m 15.5 15.5 5 5" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="m 20.063 11.525 1.777 -1.731 a .53 .53 0 0 0 -.294 -.905 l -5.166 -.755 a 2.1 2.1 0 0 1 -1.595 -1.16 l -2.31 -4.68 a .53 .53 0 0 0 -.95 .001 L 9.216 6.974 a 2.1 2.1 0 0 1 -1.597 1.16 l -5.165 .755 a .53 .53 0 0 0 -.294 .906 l 3.736 3.637 a 2.1 2.1 0 0 1 .611 1.879 l -.88 5.139 a .53 .53 0 0 0 .769 .56 l 4.617 -2.428 a 2.1 2.1 0 0 1 .987 -.243 2 2 0 0 1 .132 .004" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="m 20.5 15.5 -5 5" />
+</vector>

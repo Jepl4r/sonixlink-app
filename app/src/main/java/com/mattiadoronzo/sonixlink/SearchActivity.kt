@@ -15,17 +15,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The search, on a page of its own like the player's: the field at the top and
- * the results split into tracks, albums and artists. An album or an artist opens
- * in here, on its tracks.
+ * The search page, laid out like the player's: the field at the top and the
+ * results split into tracks, albums and artists. An album or artist opens here,
+ * on its tracks.
  */
 class SearchActivity : AppCompatActivity() {
 
     companion object {
-        /** The player's SEARCH_DEBOUNCE_MS: not a search on every keystroke. */
+        /** Typing pause before a search; matches the player's SEARCH_DEBOUNCE_MS. */
         private const val DEBOUNCE_MS = 350L
 
-        /** How many results per category, as on the player. */
+        /** Results per category, as on the player. */
         private const val PER_CATEGORY = 12
     }
 
@@ -40,22 +40,20 @@ class SearchActivity : AppCompatActivity() {
     private var openedIsArtist = false
 
     /**
-     * Which search counts. A slow query started earlier can arrive after a newer
-     * one: without this number it would put the results from two letters ago
-     * back in the list.
+     * The latest query's number. A slower, older query can finish after a
+     * newer one; its results are dropped when the numbers differ.
      */
     private var generation = 0
 
-    /** As in the queue: the playing track carries the player's accent. */
+    /** Repaints the bound rows, whose playing row carries the accent. */
     private val accentWatch = {
         if (::adapter.isInitialized) adapter.repaint()
         if (::volume.isInitialized) volume.accent()
     }
 
-    /** The volume pill, the same one every other page has. */
     private lateinit var volume: VolumePill
 
-    /** The phone's keys drive the player while searching too. */
+    /** The phone's volume keys set the player's volume. */
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
         volume.onKey(event) || super.dispatchKeyEvent(event)
 
@@ -63,8 +61,8 @@ class SearchActivity : AppCompatActivity() {
         super.onStart()
         Session.watchAccent(accentWatch)
         accentWatch()
-        // One read: nothing polls state here, and the first key press would
-        // start from the volume as it was when this page opened.
+        // A single read: nothing polls state here, and the volume keys start
+        // from Session.state.
         refreshVolume()
     }
 
@@ -96,8 +94,8 @@ class SearchActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 views.clearButton.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
-                // Typing closes the open category, but the delayed callback is
-                // what searches: closing with a search here would make two.
+                // Typing closes the open category without closeCategory(),
+                // which would search once more besides the delayed callback.
                 if (opened != null) {
                     opened = null
                     views.header.visibility = View.GONE
@@ -107,8 +105,8 @@ class SearchActivity : AppCompatActivity() {
             }
         })
 
-        // After the window has focus: called from onCreate, showSoftInput does
-        // nothing on most phones.
+        // Posted: called directly from onCreate, before the window has focus,
+        // showSoftInput does nothing on most phones.
         views.searchInput.requestFocus()
         views.searchInput.post {
             val manager = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
@@ -136,7 +134,7 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    /** The level the pill settled on, sent off the main thread. */
+    /** Sends the pill's level off the main thread. */
     private fun sendVolume(level: Int) {
         val client = Session.client ?: return
         lifecycleScope.launch {
@@ -144,7 +142,7 @@ class SearchActivity : AppCompatActivity() {
                 try {
                     client.setVolume(level)
                 } catch (e: Exception) {
-                    // The next poll will say how it really went.
+                    // Ignored: the pill keeps the level it set.
                 }
             }
         }
@@ -158,8 +156,6 @@ class SearchActivity : AppCompatActivity() {
         @Suppress("DEPRECATION")
         super.onBackPressed()
     }
-
-    // -----------------------------------------------------------------------
 
     private fun search() {
         val text = views.searchInput.text?.toString().orEmpty().trim()
@@ -182,8 +178,7 @@ class SearchActivity : AppCompatActivity() {
                 val albums = library.albumsMatching(text, PER_CATEGORY)
                 if (albums.isNotEmpty()) {
                     out.add(header(getString(R.string.tab_albums)))
-                    // Each row carries its own icon: this list mixes tracks,
-                    // albums and artists.
+                    // Per-row icons: this list mixes tracks, albums and artists.
                     out.addAll(albums.map { it.copy(iconRes = R.drawable.ic_album) })
                 }
                 val artists = library.artistsMatching(text, PER_CATEGORY)
@@ -200,7 +195,7 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    /** A row that is only a section title: the list draws those apart. */
+    /** A section title row. */
     private fun header(label: String) = Row(title = label, subtitle = "", kind = Row.Kind.HEADER)
 
     private fun onRowClicked(row: Row) {
@@ -224,7 +219,7 @@ class SearchActivity : AppCompatActivity() {
                 try {
                     Session.client?.playPath(row.path, list, value)
                 } catch (e: Exception) {
-                    // The next state will say how it went.
+                    // Ignored: the player's state shows the outcome.
                 }
             }
         }
@@ -233,8 +228,7 @@ class SearchActivity : AppCompatActivity() {
     private fun openCategory(row: Row) {
         val library = Session.library ?: return
         val mine = ++generation
-        // An artist has a count but no album: that is how one row is told from
-        // the other without carrying an extra type around.
+        // Artist rows have an empty album; album rows do not.
         openedIsArtist = row.album.isEmpty()
         opened = row
         views.header.visibility = View.VISIBLE

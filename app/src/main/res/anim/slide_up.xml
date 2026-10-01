@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The now-playing screen rises from the bottom, as on the player: it does
-     not arrive from the right like any other page. -->
+<!-- The now-playing screen slides up from the bottom, as on the player. -->
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:duration="260"
     android:fromYDelta="100%p"

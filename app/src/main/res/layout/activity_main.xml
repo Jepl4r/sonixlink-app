@@ -10,9 +10,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- A LinearLayout and not an AppBarLayout: nothing here has to collapse on
-         scroll, and an AppBarLayout outside a CoordinatorLayout brings
-         behaviour with it that is not wanted. -->
+    <!-- A LinearLayout, not an AppBarLayout: nothing collapses on scroll, and an
+         AppBarLayout outside a CoordinatorLayout adds unwanted behaviour. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -46,8 +45,7 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- The transport bar: always visible, so the controls are a thumb away
-         whichever tab is open. -->
+    <!-- The mini player: visible on every tab. -->
     <LinearLayout
         android:id="@+id/nowPlaying"
         android:layout_width="match_parent"
@@ -97,8 +95,7 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp">
 
-                <!-- They scroll themselves when they do not fit, as in the
-                     now-playing screen and on the player. -->
+                <!-- Marquee when the text does not fit, as on the player. -->
                 <TextView
                     android:id="@+id/trackTitle"
                     android:layout_width="match_parent"
@@ -123,8 +120,7 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
-            <!-- The star sits beside the track it is about, not among the
-                 transport controls. -->
+            <!-- The favourite star, beside the track title. -->
             <ImageButton
                 android:id="@+id/favouriteButton"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -163,8 +159,7 @@
                 android:contentDescription="@string/cd_prev"
                 android:tint="@color/text_primary" />
 
-            <!-- The circle comes from Accent.circleButton, which knows this
-                 player's accent. -->
+            <!-- The accent circle behind it is set by Accent.circleButton. -->
             <ImageButton
                 android:id="@+id/playButton"
                 android:layout_width="56dp"
@@ -197,8 +192,7 @@
     </LinearLayout>
   </LinearLayout>
 
-  <!-- The volume pop-up: the player's pill, the same one every other page
-       that can turn it up has. -->
+  <!-- The volume pop-up, shared with the other pages through VolumePill. -->
   <include
       android:id="@+id/volume"
       layout="@layout/volume_pill" />

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The player's volume pill, once: the same proportions and the same order as
-     volume_overlay.c (icon, number, scale). Every screen that can turn the
-     volume up includes it and hands it to VolumePill.
+<!-- The player's volume pill, with the proportions and order of
+     volume_overlay.c (icon, number, scale). Each screen with volume control
+     includes it and hands it to VolumePill.
 
-     The root has no id: with one, the <include>'s id would replace it and view
-     binding would be a different shape on every page. -->
+     The root has no id: the <include>'s id would override it, and view binding
+     would differ from page to page. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

@@ -19,10 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The first screen: which player.
- *
- * The player announces itself two different ways (mDNS and a UDP broadcast), so
- * nothing is typed here: whatever appears is tapped.
+ * The first screen: picks the player to connect to, from those found on the
+ * network (mDNS and the UDP beacon) or from the phone's paired Bluetooth devices.
  */
 class ConnectActivity : AppCompatActivity() {
 
@@ -31,13 +29,12 @@ class ConnectActivity : AppCompatActivity() {
     private val found = ArrayList<Discovery.Found>()
     private lateinit var adapter: FoundAdapter
 
-    // How long before saying there is nothing. The search carries on either
-    // way: this is only the point where saying so becomes worthwhile.
+    // When to show the "nothing found" hint. Discovery keeps running after it.
     private val giveUpAfterMs = 10_000L
     private val clock = Handler(Looper.getMainLooper())
     private val giveUp = Runnable { showNothingFound() }
 
-    /** Discovery runs on a thread of its own: what lands after stop is dropped. */
+    /** Discovery reports from its own thread; results that land after a stop are dropped. */
     private var listening = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,12 +46,12 @@ class ConnectActivity : AppCompatActivity() {
         views.foundList.layoutManager = LinearLayoutManager(this)
         views.foundList.adapter = adapter
         views.rescanButton.setOnClickListener { restartDiscovery() }
+        views.bluetoothButton.setOnClickListener { pickBluetooth() }
 
         discovery = Discovery(this)
 
-        // If the app closed itself last time, the trace is sitting there. Show
-        // it before going on, or it reconnects and crashes again with nobody
-        // having read a thing.
+        // A crash trace from the previous run is shown before reconnecting, so
+        // it can be read before the same crash happens again.
         val crash = CrashLog.pending(this)
         if (crash != null) {
             showCrash(crash)
@@ -110,15 +107,15 @@ class ConnectActivity : AppCompatActivity() {
         } else {
             resources.getQuantityString(R.plurals.players_found, found.size, found.size)
         }
-        // If a player has turned up meanwhile the explanation goes: the retry
-        // button stays, but "no player found" over a found player does not.
+        // The "no player found" hint hides once a player is listed; the retry
+        // button stays.
         views.hintText.visibility = if (found.isEmpty()) View.VISIBLE else View.GONE
     }
 
     /**
-     * Once the ten seconds are up. The retry button appears either way: even with
-     * something in the list it may be the wrong player, or one that has stopped
-     * answering, and a screen with no way out is the worst it could be.
+     * Runs when [giveUpAfterMs] expires. The retry button appears even when the
+     * list is not empty: a listed player may be the wrong one or may have stopped
+     * answering.
      */
     private fun showNothingFound() {
         views.nothingFound.visibility = View.VISIBLE
@@ -128,20 +125,25 @@ class ConnectActivity : AppCompatActivity() {
         }
     }
 
-    private fun connect(host: String, port: Int, silentFailure: Boolean = false) {
+    private fun connect(host: String, port: Int, silentFailure: Boolean = false, shownName: String = host) {
         views.progress.visibility = View.VISIBLE
         lifecycleScope.launch {
+            var why = ""
             val info = withContext(Dispatchers.IO) {
                 try {
                     PlayerClient(host, port).info()
                 } catch (e: Exception) {
+                    why = e.message.orEmpty()
                     null
                 }
             }
             views.progress.visibility = View.GONE
             if (info == null) {
                 if (!silentFailure) {
-                    views.statusText.text = getString(R.string.connect_failed, host)
+                    // Over Bluetooth the error is shown: "no service" and
+                    // "connection refused" need different fixes.
+                    val detail = if (BluetoothTransport.isBluetooth(host) && why.isNotEmpty()) "\n$why" else ""
+                    views.statusText.text = getString(R.string.connect_failed, shownName) + detail
                 }
                 return@launch
             }
@@ -157,6 +159,65 @@ class ConnectActivity : AppCompatActivity() {
     }
 
     // -----------------------------------------------------------------------
+    // Bluetooth
+    // -----------------------------------------------------------------------
+
+    /** Asked for on Android 12 and up, before the paired devices can be read. */
+    private val bluetoothPermission = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            pickBluetooth()
+        } else {
+            views.statusText.text = getString(R.string.bluetooth_denied)
+        }
+    }
+
+    /**
+     * Lists the phone's paired devices to choose the player from. Any paired
+     * device can be picked; one without the SonixLink RFCOMM service fails to
+     * connect.
+     */
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun pickBluetooth() {
+        if (android.os.Build.VERSION.SDK_INT >= 31 &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.BLUETOOTH_CONNECT,
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            bluetoothPermission.launch(android.Manifest.permission.BLUETOOTH_CONNECT)
+            return
+        }
+        @Suppress("DEPRECATION")
+        val bluetooth = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+        if (bluetooth == null || !bluetooth.isEnabled) {
+            views.statusText.text = getString(R.string.bluetooth_off)
+            return
+        }
+        val devices = try {
+            bluetooth.bondedDevices.orEmpty().sortedBy { it.name.orEmpty().lowercase() }
+        } catch (e: SecurityException) {
+            emptyList()
+        }
+        if (devices.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.bluetooth_pick)
+                .setMessage(R.string.bluetooth_none)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return
+        }
+        val names = devices.map { it.name?.takeIf { name -> name.isNotBlank() } ?: it.address }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.bluetooth_pick)
+            .setItems(names) { _, which ->
+                val device = devices[which]
+                connect(BluetoothTransport.PREFIX + device.address, 0, shownName = names[which])
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     private fun showCrash(text: String) {
         AlertDialog.Builder(this)
@@ -175,8 +236,6 @@ class ConnectActivity : AppCompatActivity() {
             }
             .show()
     }
-
-    // -----------------------------------------------------------------------
 
     private class FoundAdapter(val onClick: (Discovery.Found) -> Unit) :
         androidx.recyclerview.widget.RecyclerView.Adapter<FoundAdapter.Holder>() {

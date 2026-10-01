@@ -1,13 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Il lettore sta sulla stessa rete: serve internet per parlarci, lo stato
-         del Wi-Fi per sapere se c'e' una rete, e il multicast per farsi trovare
-         via mDNS. Nessun permesso oltre questi. -->
+    <!-- The player is on the same network: INTERNET to talk to it, the Wi-Fi
+         state to know whether there is a network, and multicast for mDNS
+         discovery. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <!-- The foreground service that stays connected with the app in the
+         background: it sends the heartbeat that keeps the SonixLink icon lit on
+         the player and shows the current track in the notification and on the
+         lock screen. WAKE_LOCK keeps it running while the player plays. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Bluetooth link to a player paired with the phone. Up to Android 11 the
+         two legacy permissions suffice; from Android 12 BLUETOOTH_CONNECT is
+         needed, requested at runtime when Bluetooth is chosen. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
 
     <application
         android:name=".SonixLinkApp"
@@ -62,5 +85,10 @@
             android:screenOrientation="portrait"
             android:label="@string/queue_title"
             android:parentActivityName=".MainActivity" />
+
+        <service
+            android:name=".PlayerService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>

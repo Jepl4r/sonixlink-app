@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The player's progress bar: a white track at 30 per cent, the fill in the
-     accent, everything rounded (src/gui/player.c). -->
+<!-- The player's progress bar (src/gui/player.c): a rounded white track at
+     30 per cent opacity with the fill in the accent. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@android:id/background"

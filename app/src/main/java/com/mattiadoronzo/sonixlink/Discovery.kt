@@ -11,15 +11,11 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 
 /**
- * Finding the player on the network.
+ * Finds players on the local network by two independent routes:
  *
- * Two routes, so neither has to work every time:
- *
- *  * DNS-SD (`_sonixlink._tcp`), which Android resolves itself through
- *    NsdManager;
- *  * a plain UDP beacon on port 7801, sent by the player every two seconds and
- *    read with six lines of socket code. This is what carries the day on
- *    networks where multicast does not pass, and whenever mDNS sulks.
+ *  * DNS-SD (`_sonixlink._tcp`), resolved through NsdManager;
+ *  * a UDP broadcast beacon on port 7801, which the player sends every two
+ *    seconds. It works on networks that do not pass multicast.
  */
 class Discovery(private val context: Context) {
 
@@ -64,7 +60,7 @@ class Discovery(private val context: Context) {
             try {
                 nsd?.stopServiceDiscovery(active)
             } catch (e: IllegalArgumentException) {
-                // Already stopped: NsdManager throws rather than ignoring.
+                // NsdManager throws if the listener is already stopped.
             }
         }
         listener = null
@@ -80,8 +76,8 @@ class Discovery(private val context: Context) {
         val manager = context.getSystemService(Context.NSD_SERVICE) as? NsdManager ?: return
         nsd = manager
 
-        // Resolutions go one at a time on older versions: two at once and the
-        // second comes back FAILURE_ALREADY_ACTIVE.
+        // Resolutions are queued and run one at a time: on older Android versions
+        // a second concurrent resolve fails with FAILURE_ALREADY_ACTIVE.
         val pending = ArrayDeque<NsdServiceInfo>()
         var resolving = false
 
@@ -153,15 +149,15 @@ class Discovery(private val context: Context) {
         private var running = true
         private var socket: DatagramSocket? = null
 
-        /** Not called stop(): that is a Thread method, and not this one. */
+        /** Closes the socket and ends the loop. Named so as not to clash with Thread.stop(). */
         fun shutdown() {
             running = false
             socket?.close()
         }
 
         override fun run() {
-            // Without this lock many phones drop broadcast traffic to save
-            // battery, and the beacon never arrives.
+            // Without a multicast lock many phones filter out broadcast packets
+            // to save power, and the beacon never arrives.
             val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
             val multicastLock = wifi?.createMulticastLock("sonixlink")?.apply {
                 setReferenceCounted(true)
@@ -203,8 +199,8 @@ class Discovery(private val context: Context) {
             val parts = message.trim().split(" ", limit = 4)
             if (parts.size < 3 || parts[0] != BEACON_PREFIX) return null
             val port = parts[2].toIntOrNull() ?: return null
-            // Where it came from beats what it claims: that is the address
-            // that actually reaches the player from this phone.
+            // The packet's source address is preferred over the advertised one:
+            // it is the address that reaches the player from this phone.
             val host = from.hostAddress ?: parts[1]
             val name = if (parts.size > 3 && parts[3].isNotBlank()) parts[3] else host
             return Found(name, host, port)

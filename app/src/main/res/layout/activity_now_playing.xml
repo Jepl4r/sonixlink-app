@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The now-playing screen, like the player's: the blurred artwork behind, the
-     whole artwork in front, the bar with the two clocks and the position in the
-     queue, and the same buttons underneath. -->
+<!-- The now-playing screen, laid out like the player's: blurred artwork behind,
+     the full artwork in front, the progress bar with elapsed and remaining time
+     and the queue position, then the controls. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/screen_bg">
 
-    <!-- The whole screen sits in one sheet, because a finger dragging it down
-         takes all of it: background, veil and content. -->
+    <!-- One sheet holds background, veil and content, so drag-to-dismiss moves
+         them together. -->
     <FrameLayout
         android:id="@+id/sheet"
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         android:contentDescription="@null"
         android:scaleType="centerCrop" />
 
-    <!-- The veil: without it, white text on light artwork does not read. -->
+    <!-- Dark veil that keeps white text readable over light artwork. -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,8 +32,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- The handle: it says the screen pulls down, and does nothing else.
-             Not a button, and not pressed; dragged. -->
+        <!-- Drag handle: a visual cue only, not clickable. -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="32dp">
@@ -88,7 +87,7 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <!-- Scrolls itself when it does not fit, as on the player. -->
+                <!-- Marquee when the text does not fit, as on the player. -->
                 <TextView
                     android:id="@+id/trackTitle"
                     android:layout_width="match_parent"
@@ -227,8 +226,8 @@
     </LinearLayout>
     </FrameLayout>
 
-    <!-- The pill sits outside the sheet: while it is up the drag does not
-         start, and it must not go down with the rest. -->
+    <!-- The volume pill sits outside the sheet so it does not move with the
+         drag; while it is shown the drag does not start. -->
     <include
         android:id="@+id/volume"
         layout="@layout/volume_pill" />

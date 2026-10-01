@@ -23,7 +23,7 @@
         android:layout_height="44dp"
         android:layout_marginTop="24dp" />
 
-    <!-- After ten seconds with nothing: why, and how to try again. -->
+    <!-- Shown after ten seconds of searching: the hint and the retry button. -->
     <LinearLayout
         android:id="@+id/nothingFound"
         android:layout_width="match_parent"
@@ -59,5 +59,23 @@
         android:layout_weight="1"
         android:layout_marginTop="24dp"
         android:clipToPadding="false" />
+
+    <!-- Connects over Bluetooth to a player paired with the phone, for when
+         there is no shared Wi-Fi. -->
+    <Button
+        android:id="@+id/bluetoothButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:drawableStart="@drawable/ic_bluetooth"
+        android:drawablePadding="10dp"
+        android:drawableTint="@color/accent"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="@string/connect_bluetooth"
+        android:textAllCaps="false"
+        android:textColor="@color/accent"
+        android:textSize="16sp" />
 
 </LinearLayout>

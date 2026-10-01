@@ -9,10 +9,9 @@ import androidx.core.content.ContextCompat
 /**
  * The player's accent, applied by hand.
  *
- * In the theme, `colorPrimary` and `@color/accent` are the Adwaita blue, which
- * is only the starting value: the real accent is whatever the player says on
- * each connection. Everything that has to follow it goes through here, because
- * a tint left to the theme stays blue forever.
+ * The theme's `colorPrimary` and `@color/accent` are a fixed Adwaita blue; the
+ * real accent arrives from the player on each connection. Anything that must
+ * follow it is tinted through here, since theme tints never change.
  */
 object Accent {
 
@@ -25,8 +24,7 @@ object Accent {
 
     /**
      * A TabLayout's icons and labels: the selected one in the accent, the rest
-     * in secondary grey. Without this Material tints the selected one with
-     * `colorPrimary`, which is the theme's blue.
+     * in secondary grey. Replaces Material's default `colorPrimary` tint.
      */
     fun tabColors(context: Context): ColorStateList {
         val states = arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf())
@@ -36,10 +34,7 @@ object Accent {
 
     /**
      * The play button inside its circle, as on the player: a white disc with the
-     * accent glyph over it, not the other way round. Play and pause are one
-     * control in two states, and it is the glyph that carries the colour
-     * (`player.c`, `apply_playback_status`); the disc changes only to stand out
-     * from whatever is behind it.
+     * accent glyph over it (`player.c`, `apply_playback_status`).
      */
     fun circleButton(button: ImageButton, diameterDp: Int) {
         val density = button.resources.displayMetrics.density

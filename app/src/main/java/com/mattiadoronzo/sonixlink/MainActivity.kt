@@ -22,11 +22,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The real screen: the library in six tabs and the controls at the bottom.
+ * The main screen: the library in tabs and the playback controls at the bottom.
  *
- * The index is downloaded once and then queried locally, so scrolling six
- * thousand tracks puts nothing on the network. All that stays on the wire are
- * the commands and the state, which are two lines of JSON.
+ * The library is queried from the local copy of the index; only commands and
+ * state polls go over the connection.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -37,31 +36,51 @@ class MainActivity : AppCompatActivity() {
 
         private const val POLL_MS = 1000L
 
+        /** Minimum wait before an empty cover square is requested again. */
+        private const val COVER_RETRY_MS = 5000L
+
     }
 
-    /** How the tabs hear that a star has changed. */
+    /** Notifies the tabs of favourite changes and of changes to the player's sort order. */
     interface LibraryListener {
         fun onFavouritesChanged()
+
+        /** Called when the player's sort order changes; the tab should requery its list. */
+        fun onOrderChanged() {}
     }
 
     private lateinit var views: ActivityMainBinding
+
+    /** The player's name, used when restarting the service. */
+    private var playerName = ""
     private lateinit var client: PlayerClient
 
     private val listeners = LinkedHashSet<LibraryListener>()
 
-    /** The volume pill, the same one every other page has. */
     private lateinit var volume: VolumePill
 
-    /** Kept in a field: the object itself is what removes itself. */
+    /** Held in a field: unwatchAccent needs the same instance that was registered. */
     private val accentWatch = { applyAccent(Session.accent) }
+
+    /**
+     * Retries the playing track's thumbnail when new covers arrive, if the
+     * square is still empty.
+     */
+    private val coversWatch = {
+        if (views.nowCover.visibility != View.VISIBLE && coverPath.isNotEmpty()) {
+            val path = coverPath
+            coverPath = ""
+            showNowCover(path)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         views = ActivityMainBinding.inflate(layoutInflater)
         setContentView(views.root)
 
-        // Before any early return: the volume keys arrive regardless, and this
-        // screen can close at once to send the user elsewhere.
+        // Before any early return: volume keys can arrive even while the screen
+        // is finishing, and dispatchKeyEvent uses this.
         volume = VolumePill(views.volume) { level -> send { it.setVolume(level) } }
 
         val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
@@ -70,9 +89,9 @@ class MainActivity : AppCompatActivity() {
             backToConnect()
             return
         }
-        // SyncActivity is what opens the index and the thumbnails. If they are
-        // missing -- Android rebuilt the process and stood this screen up on its
-        // own -- an empty library is not shown: it goes back through there.
+        // SyncActivity opens the index and the thumbnails. If the process was
+        // recreated straight into this screen they are missing, so go through
+        // SyncActivity again instead of showing an empty library.
         if (Session.library == null) {
             startActivity(
                 Intent(this, SyncActivity::class.java)
@@ -86,9 +105,16 @@ class MainActivity : AppCompatActivity() {
         client = PlayerClient(host, port)
         Session.client = client
 
+        // The service keeps the heartbeat and the notification running while
+        // this screen is in the background.
+        val name = intent.getStringExtra(EXTRA_NAME).orEmpty()
+        playerName = name
+        PlayerService.start(this, host, port, name)
+        askForNotifications()
+
         setSupportActionBar(views.toolbar)
-        supportActionBar?.title = intent.getStringExtra(EXTRA_NAME) ?: host
-        supportActionBar?.subtitle = "$host:$port"
+        supportActionBar?.title = name.ifEmpty { client.label }
+        supportActionBar?.subtitle = client.label
 
         views.pager.adapter = Sections(this)
         views.pager.offscreenPageLimit = 1
@@ -98,14 +124,13 @@ class MainActivity : AppCompatActivity() {
             tab.setIcon(section.icon)
         }.attach()
 
-        // The title scrolls itself when it does not fit, as on the player and
-        // in the now-playing screen.
+        // Selected so the marquee scrolls text that does not fit.
         views.trackTitle.isSelected = true
         views.trackArtist.isSelected = true
 
         wireControls()
-        // At once, not on the first state: SyncActivity has already asked the
-        // player, and waiting for the poll would mean a second of the wrong blue.
+        // Applied immediately: SyncActivity has already read the accent from
+        // the player, so there is no need to wait for the first poll.
         applyAccent(Session.accent)
         showLibraryCount()
         startPolling()
@@ -114,21 +139,23 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         Session.watchAccent(accentWatch)
-        // The accent may have changed while another screen was in front.
+        Covers.watch(coversWatch)
+        // Catch up on accent and cover changes made while not watching.
         accentWatch()
+        coversWatch()
     }
 
     override fun onStop() {
         super.onStop()
         Session.unwatchAccent(accentWatch)
+        Covers.unwatch(coversWatch)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         volume.release()
-        // The session is not cleared here: this screen also closes to hand over
-        // to syncing, which is already using the same index. Clearing belongs to
-        // whoever goes back to choosing a player.
+        // The session is not cleared here: this screen also finishes to hand
+        // over to SyncActivity, which uses the same index. backToConnect clears it.
     }
 
     // -----------------------------------------------------------------------
@@ -159,7 +186,7 @@ class MainActivity : AppCompatActivity() {
             supportActionBar?.subtitle = if (count > 0) {
                 getString(R.string.library_ready, count)
             } else {
-                "${client.host}:${client.port}"
+                client.label
             }
         }
     }
@@ -177,11 +204,12 @@ class MainActivity : AppCompatActivity() {
         views.prevButton.setOnClickListener { send { it.previous() } }
         views.nextButton.setOnClickListener { send { it.next() } }
         views.modeButton.setOnClickListener {
-            val next = Session.state.mode.next()
-            // The button changes face at once: confirmation comes with the next
-            // poll, and waiting for it would make the button look broken.
+            val next = Session.heldMode.resolve(Session.state.mode).next()
+            Session.heldMode.set(next)
+            // The icon updates before the player confirms; the mode name goes
+            // into the content description for TalkBack.
             showMode(next)
-            say(getString(next.label))
+            views.modeButton.contentDescription = getString(next.label)
             send { it.setMode(next) }
         }
 
@@ -190,10 +218,10 @@ class MainActivity : AppCompatActivity() {
             if (path.isEmpty()) {
                 return@setOnClickListener
             }
-            val starred = !Session.state.favourite
-            Session.state = Session.state.copy(favourite = starred)
+            val starred = !shownFavourite(Session.state)
+            Session.heldFavourite.set(path to starred)
             showFavourite(starred)
-            // The Favourites tab is looking at the same list: it has to be redone.
+            // The Favourites tab requeries once the command has landed.
             send(then = { announceFavourites() }) { it.setFavourite(path, starred) }
         }
 
@@ -201,23 +229,22 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, QueueActivity::class.java))
         }
 
-        // The track details open the full screen, like touching the artwork on
-        // the player.
+        // The track details open the now-playing screen, sliding up from the bottom.
         views.nowDetails.setOnClickListener {
             if (Session.state.hasTrack) {
                 startActivity(Intent(this, NowPlayingActivity::class.java))
-                // It rises from the bottom instead of arriving from the right:
-                // the same screen as before, seen closer.
                 @Suppress("DEPRECATION")
                 overridePendingTransition(R.anim.slide_up, R.anim.stay)
             }
         }
     }
 
-    /** Sends a command off the main thread, and says so when it does not land. */
+    /**
+     * Runs a command on the IO dispatcher. On success refreshes the state and
+     * runs [then]; on failure shows a snackbar.
+     */
     private fun send(then: () -> Unit = {}, action: (PlayerClient) -> Unit) {
-        // The screen can be standing with no player: the volume keys reach here
-        // too, and the system delivers those regardless.
+        // Volume keys can reach here before the client exists.
         if (!::client.isInitialized) return
         lifecycleScope.launch {
             val failed = withContext(Dispatchers.IO) {
@@ -237,7 +264,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Starts one track, from the list it was touched in. */
+    /**
+     * Sends a command on behalf of a tab. Once it lands, shows [done] (if any)
+     * and then runs [then].
+     */
+    fun perform(done: String? = null, then: () -> Unit = {}, action: (PlayerClient) -> Unit) {
+        send(then = {
+            if (done != null) say(done)
+            then()
+        }, action = action)
+    }
+
+    /**
+     * Tells the tabs the favourites changed on the player. [afterMs] delays
+     * the notice for changes the player applies asynchronously, after the
+     * command has returned.
+     */
+    fun favouritesChanged(afterMs: Long = 0) {
+        if (afterMs <= 0) {
+            announceFavourites()
+        } else {
+            views.root.postDelayed({ announceFavourites() }, afterMs)
+        }
+    }
+
+    /** Plays [path] within the list (and list value) it was chosen from. */
     fun play(path: String, list: String = "all", value: String = "") {
         if (path.isEmpty()) return
         send { it.playPath(path, list, value) }
@@ -268,10 +319,30 @@ class MainActivity : AppCompatActivity() {
         } ?: return
         Session.state = state
         showState(state)
+        // The service stops itself and its notification when the player stops
+        // answering; restart it once the player answers again.
+        if (!PlayerService.running) {
+            PlayerService.start(this, client.host, client.port, playerName)
+        }
     }
 
-    /** The playing track's artwork: looked up only when the track changes. */
+    /** Path of the track whose cover is shown; the cover is looked up only when it changes. */
     private var coverPath = ""
+
+    /** Uptime of the last cover lookup that came back empty. */
+    private var coverMissedAt = 0L
+
+    /**
+     * Retries an empty cover square every [COVER_RETRY_MS]. A background app
+     * can have no network, so the request may fail with the screen off.
+     */
+    private fun retryNowCover() {
+        if (coverPath.isEmpty() || views.nowCover.visibility == View.VISIBLE) return
+        if (android.os.SystemClock.uptimeMillis() - coverMissedAt < COVER_RETRY_MS) return
+        val path = coverPath
+        coverPath = ""
+        showNowCover(path)
+    }
 
     private fun showNowCover(path: String) {
         if (path == coverPath) return
@@ -280,42 +351,73 @@ class MainActivity : AppCompatActivity() {
             views.nowCover.visibility = View.INVISIBLE
             return
         }
+        val side = (48 * resources.displayMetrics.density).toInt().coerceAtLeast(48)
         lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.IO) {
                 val row = Session.library?.tracksByPaths(listOf(path))?.get(path)
-                if (row == null) {
-                    null
-                } else {
-                    Session.covers?.forTrack(row.artPath, row.artMtime, row.artSize)
+                val thumb = row?.let {
+                    Session.covers?.forTrack(it.artPath, it.artMtime, it.artSize)
+                        ?: Session.covers?.forAlbum(it.album)
                 }
+                // Tracks without a list thumbnail fall back to the full cover
+                // from Artwork, which is often already cached.
+                thumb ?: smallArtwork(path, side)
             }
-            // The track can have changed meanwhile: the old artwork must not
-            // land on top of the current one.
+            // Drop the result if the track changed during the lookup.
             if (coverPath != path) return@launch
             if (bitmap != null) {
                 views.nowCover.setImageBitmap(bitmap)
                 views.nowCover.visibility = View.VISIBLE
             } else {
-                // Invisible rather than gone: the square keeps its place and the
-                // title does not jump left between one track and the next.
+                // INVISIBLE rather than GONE keeps the title from shifting left.
+                coverMissedAt = android.os.SystemClock.uptimeMillis()
                 views.nowCover.setImageDrawable(null)
                 views.nowCover.visibility = View.INVISIBLE
             }
         }
     }
 
+    /** The track's cover from [Artwork], subsampled to no smaller than [side] pixels. */
+    private fun smallArtwork(path: String, side: Int): android.graphics.Bitmap? {
+        val client = Session.client ?: return null
+        val bytes = try {
+            Artwork.get(client, path) { coverPath == path }
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        return try {
+            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            var sample = 1
+            while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= side) sample *= 2
+            android.graphics.BitmapFactory.decodeByteArray(
+                bytes, 0, bytes.size,
+                android.graphics.BitmapFactory.Options().apply { inSampleSize = sample },
+            )
+        } catch (e: OutOfMemoryError) {
+            null
+        }
+    }
+
     private fun showState(state: PlayerState) {
+        // A sort order changed on the player makes the tabs requery.
+        val sort = state.sort
+        if (sort != null && sort != Session.sort) {
+            Session.sort = sort
+            listeners.toList().forEach { it.onOrderChanged() }
+        }
         if (state.accent.isNotEmpty()) {
             val color = Session.parseAccent(state.accent)
             if (color != Session.accent) {
-                // Only here: the watcher does the recolouring, and it reaches the
-                // tabs and the other screens still open as well.
+                // Setting it notifies the accent watchers, which recolour this
+                // screen and any other open one.
                 Session.accent = color
                 val text = state.accent
                 lifecycleScope.launch(Dispatchers.IO) { Settings.rememberAccent(this@MainActivity, text) }
             }
         }
         showNowCover(state.path)
+        retryNowCover()
 
         setText(
             views.trackTitle,
@@ -333,7 +435,7 @@ class MainActivity : AppCompatActivity() {
         views.playButton.contentDescription =
             getString(if (state.isPlaying) R.string.cd_pause else R.string.cd_play)
 
-        showMode(state.mode)
+        showMode(Session.heldMode.resolve(state.mode))
 
         views.progressTrack.progress = if (state.duration > 0) {
             (state.position.toLong() * 1000 / state.duration).toInt().coerceIn(0, 1000)
@@ -343,19 +445,24 @@ class MainActivity : AppCompatActivity() {
 
         volume.follow(state.volume)
 
-        showFavourite(state.favourite)
+        showFavourite(shownFavourite(state))
         views.favouriteButton.isEnabled = state.hasTrack
     }
 
     /**
-     * Writing into a TextView restarts the marquee from the beginning, even when
-     * the text is the same as before: the poll, once a second, had the title
-     * moving in fits and starts.
+     * Sets the text only if it differs: any write restarts the marquee, even
+     * with the same text, and the poll writes every second.
      */
     private fun setText(view: android.widget.TextView, text: String) {
         if (view.text?.toString() != text) {
             view.text = text
         }
+    }
+
+    /** The star to show: a value just set here wins until the player agrees (see [Held]). */
+    private fun shownFavourite(state: PlayerState): Boolean {
+        val (path, starred) = Session.heldFavourite.resolve(state.path to state.favourite)
+        return if (path == state.path) starred else state.favourite
     }
 
     private fun showFavourite(starred: Boolean) {
@@ -376,31 +483,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * The app dresses itself in the accent chosen on the player. What follows it
-     * is what the player itself paints with the accent: the play button, the
-     * progress line, the volume fill, the open tab's indicator.
+     * Tints with the player's accent the same elements the player tints: the
+     * play button, the progress line, the volume fill and the selected tab.
      */
     private fun applyAccent(color: Int) {
         val tint = android.content.res.ColorStateList.valueOf(color)
         views.progressTrack.progressTintList = tint
         volume.accent()
         views.tabs.setSelectedTabIndicatorColor(color)
-        // The tabs' icons and labels: without these two Material tints the
-        // selected tab with `colorPrimary`, the theme's starting blue.
+        // Without these two tints Material colours the selected tab's icon and
+        // label with the theme's `colorPrimary`.
         views.tabs.tabIconTint = Accent.tabColors(this)
         views.tabs.setTabTextColors(
             androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary),
             color,
         )
-        // The play button sits inside its circle, as on the player.
         Accent.circleButton(views.playButton, 56)
-        showMode(Session.state.mode)
+        showMode(Session.heldMode.resolve(Session.state.mode))
     }
 
-    /**
-     * The phone's volume keys drive the player, not the phone's speaker: no sound
-     * comes out here, and they are the handiest way to turn it up.
-     */
+    /** Routes the phone's volume keys to the player's volume. */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
         volume.onKey(event) || super.dispatchKeyEvent(event)
 
@@ -420,10 +522,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         R.id.action_refresh -> if (!::client.isInitialized) {
-            // The screen is already closing: there is nothing to refresh.
+            // onCreate returned early and the screen is finishing.
             true
         } else {
-            // Downloading again means going back through the page that does it.
+            // A forced download goes through SyncActivity.
             startActivity(
                 Intent(this, SyncActivity::class.java)
                     .putExtra(SyncActivity.EXTRA_HOST, client.host)
@@ -437,6 +539,8 @@ class MainActivity : AppCompatActivity() {
 
         R.id.action_disconnect -> {
             Settings.forgetHost(this)
+            // Stopping the service closes the link to the player.
+            PlayerService.stop(this)
             backToConnect()
             true
         }
@@ -444,8 +548,29 @@ class MainActivity : AppCompatActivity() {
         else -> super.onOptionsItemSelected(item)
     }
 
+    /**
+     * POST_NOTIFICATIONS is required from Android 13 (API 33) for the playback
+     * notification to show. It is requested once; a refusal is not asked again.
+     */
+    private val notificationPermission = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { }
+
+    private fun askForNotifications() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        val permission = android.Manifest.permission.POST_NOTIFICATIONS
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        if (Settings.askedNotifications(this)) return
+        Settings.rememberAskedNotifications(this)
+        notificationPermission.launch(permission)
+    }
+
     private fun backToConnect() {
-        // Here it does: the index is of no use to anyone any more.
+        // Leaving the player: the session's index and covers are closed here.
         Session.clear()
         startActivity(
             Intent(this, ConnectActivity::class.java)

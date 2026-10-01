@@ -11,12 +11,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Syncing, on a page of its own.
+ * The sync screen shown before [MainActivity].
  *
- * Brings the two files the app needs onto the phone -- the library index and the
- * player's thumbnails -- and only opens the real screen once both are there.
- * Before that there is nothing to show: an empty list reads as an empty library,
- * and transport controls over a library that has not arrived are just confusing.
+ * Downloads the library index when it is missing or stale and fetches the
+ * player's list of thumbnail keys, then opens the main screen. Without the
+ * index it stops with a retry button, since an empty list would read as an
+ * empty library.
  */
 class SyncActivity : AppCompatActivity() {
 
@@ -25,7 +25,7 @@ class SyncActivity : AppCompatActivity() {
         const val EXTRA_PORT = "port"
         const val EXTRA_NAME = "name"
 
-        /** Download again even what still looks good. */
+        /** Download again even what is up to date. */
         const val EXTRA_FORCE = "force"
     }
 
@@ -48,10 +48,10 @@ class SyncActivity : AppCompatActivity() {
 
         client = PlayerClient(host, port)
         Session.client = client
-        // The accent last seen, until the player says its own.
+        // The last known accent, until the player reports its own.
         Settings.accent(this).takeIf { it.isNotEmpty() }?.let { Session.accent = Session.parseAccent(it) }
-        // Always fresh: the screen that sent us here may close afterwards and
-        // take the previous ones with it.
+        // Always new instances: the calling screen may close the previous ones
+        // when it finishes.
         Session.library?.close()
         Session.covers?.close()
         Session.library = Library(this)
@@ -84,6 +84,8 @@ class SyncActivity : AppCompatActivity() {
                 failed(getString(R.string.scanning_wait))
                 return@launch
             }
+            // The player's sort order, set before the first list is drawn.
+            info.sort?.let { Session.sort = it }
 
             if (!syncLibrary(info, force)) {
                 failed(getString(R.string.sync_no_library))
@@ -91,8 +93,8 @@ class SyncActivity : AppCompatActivity() {
             }
             syncCovers(info, force)
 
-            // The player's accent before the screen opens, so it does not start
-            // blue and change a second later.
+            // Set before the main screen opens, so it does not start with the
+            // default color and switch.
             if (info.accent.isNotEmpty()) {
                 Session.accent = Session.parseAccent(info.accent)
                 withContext(Dispatchers.IO) { Settings.rememberAccent(this@SyncActivity, info.accent) }
@@ -101,65 +103,108 @@ class SyncActivity : AppCompatActivity() {
         }
     }
 
-    /** The index. Nothing goes on without it: it is the library. */
+    /** Downloads the index if needed and opens it. False when there is no usable library. */
     private suspend fun syncLibrary(info: PlayerInfo, force: Boolean): Boolean {
         val library = Session.library ?: return false
-        val (stampHost, stampMtime) = withContext(Dispatchers.IO) { Settings.databaseStamp(this@SyncActivity) }
-        val stale = stampHost != client.host || stampMtime != info.dbMtime || info.dbMtime == 0L
+        val (stampOwner, stampVersion) = withContext(Dispatchers.IO) { Settings.databaseStamp(this@SyncActivity) }
+        val owner = info.identity(client.host)
+        val stale = stampOwner != owner || stampVersion != info.dbVersion || info.dbMtime == 0L
 
         if (info.dbAvailable && (force || stale || !library.exists)) {
             views.syncDetail.setText(R.string.sync_library)
+            showAmount(0, info.dbSize)
             val ok = withContext(Dispatchers.IO) {
                 try {
                     library.close()
-                    client.downloadDatabase(library.databaseFile)
+                    client.downloadDatabase(library.databaseFile) { done, total ->
+                        val size = if (total > 0) total else info.dbSize
+                        runOnUiThread { showAmount(done, size) }
+                    }
                     true
                 } catch (e: Exception) {
                     false
                 }
             }
+            hideAmount()
             if (ok) {
-                withContext(Dispatchers.IO) { Settings.rememberDatabaseStamp(this@SyncActivity, client.host, info.dbMtime) }
+                withContext(Dispatchers.IO) { Settings.rememberDatabaseStamp(this@SyncActivity, owner, info.dbVersion) }
             }
         }
         return withContext(Dispatchers.IO) { library.open() }
     }
 
     /**
-     * The thumbnails. Without them the library still reads, with icons: not a
-     * reason to stop everything.
+     * Opens the thumbnail store and fetches the player's list of thumbnail
+     * keys when it has changed; the thumbnails themselves are fetched as the
+     * lists scroll (see [Covers]). Failures here do not stop the sync.
      */
     private suspend fun syncCovers(info: PlayerInfo, force: Boolean) {
         val covers = Session.covers ?: return
-        val (stampHost, stampMtime) = withContext(Dispatchers.IO) { Settings.coversStamp(this@SyncActivity) }
-        val stale = stampHost != client.host || stampMtime != info.coversMtime || info.coversMtime == 0L
+        withContext(Dispatchers.IO) { covers.open() }
+        val fetchWith = client
+        covers.source = { keys -> fetchWith.thumbs(keys) }
+        covers.slowLink = fetchWith.isBluetooth
 
-        if (info.coversAvailable && (force || stale || !covers.exists)) {
-            views.syncDetail.setText(R.string.sync_covers)
-            val ok = withContext(Dispatchers.IO) {
-                try {
-                    covers.close()
-                    client.downloadCovers(covers.databaseFile)
-                    true
-                } catch (e: Exception) {
-                    false
+        val (stampOwner, stampVersion) = withContext(Dispatchers.IO) { Settings.coversStamp(this@SyncActivity) }
+        val owner = info.identity(client.host)
+        val stale = stampOwner != owner || stampVersion != info.coversVersion || info.coversMtime == 0L
+
+        val haveList = !force && !stale && withContext(Dispatchers.IO) { covers.loadRemoteKeys() }
+        if (!haveList) {
+            if (info.coversAvailable) {
+                views.syncDetail.setText(R.string.sync_covers)
+                val keys = withContext(Dispatchers.IO) {
+                    try {
+                        client.thumbKeys()
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
-            }
-            if (ok) {
-                withContext(Dispatchers.IO) { Settings.rememberCoversStamp(this@SyncActivity, client.host, info.coversMtime) }
+                if (keys != null) {
+                    withContext(Dispatchers.IO) {
+                        covers.setRemoteKeys(keys)
+                        Settings.rememberCoversStamp(this@SyncActivity, owner, info.coversVersion)
+                    }
+                } else {
+                    // The player cannot list them: only stored thumbnails are
+                    // shown, nothing is fetched.
+                    covers.clearRemoteKeys()
+                }
+            } else {
+                covers.setRemoteKeys(emptySet())
             }
         }
-        withContext(Dispatchers.IO) { covers.open() }
 
-        // Which track stands in as each album's cover. Done here, once, and not
-        // row by row while scrolling: the player only has thumbnails for tracks
-        // it has actually drawn, and picking any track of the album left records
-        // blank that do have artwork.
+        // Picks, once, the track that stands in as each album's cover.
         val library = Session.library
         if (library != null) {
-            views.syncDetail.setText(R.string.sync_covers)
             withContext(Dispatchers.IO) { covers.indexAlbums(library.tracks()) }
         }
+    }
+
+    /** Shows how much of the index has arrived, as a bar and "1.2 MB of 4.8 MB". */
+    private fun showAmount(done: Long, total: Long) {
+        views.syncBar.visibility = View.VISIBLE
+        views.syncAmount.visibility = View.VISIBLE
+        views.syncProgress.visibility = View.GONE
+        if (total > 0) {
+            views.syncBar.setProgressCompat((done * 1000 / total).toInt().coerceIn(0, 1000), true)
+            views.syncAmount.text = getString(
+                R.string.sync_progress,
+                android.text.format.Formatter.formatShortFileSize(this, done),
+                android.text.format.Formatter.formatShortFileSize(this, total),
+            )
+        } else {
+            // Unknown total: the amount alone.
+            views.syncAmount.text = android.text.format.Formatter.formatShortFileSize(this, done)
+        }
+        views.syncBar.setIndicatorColor(Session.accent)
+    }
+
+    private fun hideAmount() {
+        views.syncBar.visibility = View.GONE
+        views.syncAmount.visibility = View.GONE
+        views.syncProgress.visibility = View.VISIBLE
     }
 
     private fun done() {
@@ -173,6 +218,7 @@ class SyncActivity : AppCompatActivity() {
     }
 
     private fun failed(message: String) {
+        hideAmount()
         views.syncProgress.visibility = View.GONE
         views.syncText.text = message
         views.syncDetail.text = ""

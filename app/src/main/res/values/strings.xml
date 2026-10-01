@@ -1,6 +1,6 @@
 <resources>
-    <!-- English is the fallback: Android picks values-<language> when there is
-         one, and lands here for every other. -->
+    <!-- English is the fallback for every language without its own
+         values-<language> folder. -->
     <string name="app_name">SonixLink</string>
 
     <string name="connect_title">Find the player</string>
@@ -8,6 +8,11 @@
     <string name="connect_none">No player found. Check that SonixLink is on in the player and that the phone is on the same Wi-Fi network.</string>
     <string name="connect_rescan">Search again</string>
     <string name="connect_failed">No answer: %1$s</string>
+    <string name="connect_bluetooth">Connect over Bluetooth</string>
+    <string name="bluetooth_pick">Paired devices</string>
+    <string name="bluetooth_none">No paired device. Turn on Bluetooth and SonixLink on the player, then pair it with the phone in the phone\'s Bluetooth settings.</string>
+    <string name="bluetooth_off">Bluetooth is off on the phone.</string>
+    <string name="bluetooth_denied">Without the Bluetooth permission the app cannot reach the player.</string>
 
     <string name="crash_title">The app closed itself</string>
     <string name="crash_copy">Copy</string>
@@ -24,6 +29,7 @@
     <string name="tab_album_artists">Album artists</string>
     <string name="tab_playlists">Playlists</string>
     <string name="tab_favourites">Favourites</string>
+    <string name="tab_folders">Folders</string>
 
     <string name="downloading">Downloading the index…</string>
     <string name="downloading_progress">Downloading the index… %1$d%%</string>
@@ -46,6 +52,29 @@
     <string name="sync_unreachable">The player is not answering.</string>
     <string name="sync_no_library">Could not download the index.</string>
     <string name="retry">Try again</string>
+
+    <string name="notification_channel">Playback on the player</string>
+    <string name="notification_channel_description">The track playing on the player, with its controls.</string>
+    <string name="notification_connected">Connected to %1$s</string>
+    <string name="notification_disconnect">Disconnect</string>
+
+    <string name="cd_play_menu">Play all</string>
+    <string name="play_random">Play in random order</string>
+    <string name="play_sequence">Play in sequence</string>
+    <string name="play_random_track">Add a random track to the queue</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="sel_queue">Add to the queue</string>
+    <string name="sel_fav_add">Add to favourites</string>
+    <string name="sel_playlist_add">Add to playlist</string>
+    <string name="sel_fav_remove">Remove from favourites</string>
+    <string name="sel_playlist_remove">Remove from the playlist</string>
+    <string name="done_queue">Added to the queue</string>
+    <string name="done_fav">Added to favourites</string>
+    <string name="done_playlist">Tracks added</string>
+    <string name="done_removed">Tracks removed</string>
+    <string name="playlist_new">New playlist</string>
+    <string name="playlist_name_hint">Playlist name</string>
+    <string name="sync_progress">%1$s of %2$s</string>
 
     <string name="queue_title">Queue</string>
     <string name="queue_position">%1$d of %2$d</string>

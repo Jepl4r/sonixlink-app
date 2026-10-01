@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Converted from Sonix Player's own notification icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 2 16 a 2 2 0 0 0 2 -2 V 9 a 2 2 0 0 1 4 0 v 8 a 2 2 0 0 0 4 0 V 7 a 2 2 0 0 1 4 0 v 12 a 2 2 0 0 0 4 0 V 5 a 2 2 0 0 1 2 -2" />
+</vector>

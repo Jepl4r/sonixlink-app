@@ -16,51 +16,60 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The player's queue.
+ * The player's whole queue, in its order, with the playing row highlighted.
  *
- * The player sends paths and nothing else -- a window around the playing track,
- * not the whole queue, which can be the entire library. Titles, artists and
- * artwork come out of the index the app already holds, so what crosses the
- * network is a few tens of kilobytes of text.
+ * The player sends only paths, a page at a time. Rows are laid out for the full
+ * length at once and filled as the pages near the visible ones arrive; titles,
+ * artists and artwork come from the app's local index.
+ *
+ * The queue revision, read with the state, changes whenever the player's queue
+ * does (a new list, shuffle, a track added); the pages held are then dropped
+ * and fetched again.
  */
 class QueueActivity : AppCompatActivity() {
+
+    private companion object {
+        /** Rows per page; matches the player's SONIXLINK_QUEUE_WINDOW. */
+        const val PAGE = 200
+
+        /** How often the state is read while this page is open. */
+        const val REFRESH_MS = 1000L
+
+        /** Rows beyond the visible ones fetched ahead of the scroll. */
+        const val AHEAD = 40
+    }
 
     private lateinit var views: ActivityQueueBinding
     private lateinit var adapter: RowAdapter
 
-    /** Where the first shown row sits in the queue, for jumping. */
-    private var firstIndex = 0
+    /** The queue the rows belong to: its revision and its length. */
+    private var revision = Long.MIN_VALUE
+    private var count = -1
 
-    /** How often the queue is asked for while this page is open. */
-    private val refreshMs = 1500L
+    /** Where playback sits in the queue. */
+    private var position = -1
 
-    /** The queue as shown, so nothing is redrawn while it has not changed. */
-    private var shownSignature = ""
-
-    /**
-     * One round at a time. The periodic poll and a jump start from two different
-     * coroutines: without this the older answer could land last and put the
-     * previous window back, undoing the jump.
-     */
-    private var loading = false
+    /** The pages held for [revision], by the index of their first row. */
+    private val loaded = HashSet<Int>()
 
     /**
-     * The playing track carries the accent here too: when it changes on the
-     * player while this page is open, bound rows have to be repainted.
+     * One page in flight at a time: the player keeps a single queue window,
+     * and requests for different pages would move it back and forth.
      */
+    private var fetching = false
+
+    /** Whether the list has been scrolled to the playing row since it was laid out. */
+    private var placed = false
+
+    /** Repaints the bound rows, whose playing row carries the accent. */
     private val accentWatch = {
         if (::adapter.isInitialized) adapter.repaint()
         if (::volume.isInitialized) volume.accent()
     }
 
-    /** The volume pill, the same one every other page has. */
     private lateinit var volume: VolumePill
 
-    /**
-     * The phone's keys drive the player from here as well: the queue is where
-     * what plays gets chosen, and not being able to turn it up in the same place
-     * is a door shut in the middle of the room.
-     */
+    /** The phone's volume keys set the player's volume. */
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
         volume.onKey(event) || super.dispatchKeyEvent(event)
 
@@ -73,9 +82,6 @@ class QueueActivity : AppCompatActivity() {
         super.onStart()
         Session.watchAccent(accentWatch)
         accentWatch()
-        // One read: nothing polls state here, and the first key press would
-        // start from the volume as it was when this page opened.
-        refreshVolume()
     }
 
     override fun onStop() {
@@ -94,116 +100,139 @@ class QueueActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.queue_title)
         views.toolbar.setNavigationOnClickListener { finish() }
 
-        adapter = RowAdapter(R.drawable.ic_track) { at, row -> jumpTo(at, row) }
+        adapter = RowAdapter(R.drawable.ic_track) { at, _ -> jumpTo(at) }
         views.list.layoutManager = LinearLayoutManager(this)
         views.list.adapter = adapter
+        views.list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                fetchVisible()
+            }
+        })
 
-        // The queue moves underfoot: a track started from another screen, the
-        // player advancing on its own, a jump in here.
+        // Polls while visible: the queue and position change from elsewhere too.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (isActive) {
-                    // A real wait: without it, a slow network would have three
-                    // requests in flight at once and the oldest could land last,
-                    // rewriting the list with stale rows.
-                    load()
-                    delay(refreshMs)
+                    refresh()
+                    delay(REFRESH_MS)
                 }
             }
         }
     }
 
     /**
-     * Asks for the queue and redraws it if it has changed. `force` redraws it
-     * either way, without putting the spinner back over a list that is already
-     * there or sending the scroll to the top.
+     * Reads the state: the queue's length, revision and position. A different
+     * queue lays the rows out afresh; the same one only moves the highlight.
      */
-    private suspend fun load(force: Boolean = false) {
+    private suspend fun refresh() {
         val client = Session.client
         if (client == null) {
             finish()
             return
         }
-        if (loading && !force) {
-            return
-        }
-        loading = true
-        try {
-            loadNow(client, force)
-        } finally {
-            loading = false
-        }
-    }
-
-    private suspend fun loadNow(client: PlayerClient, force: Boolean) {
-        val firstTime = shownSignature.isEmpty()
-        if (firstTime) {
-            views.progress.visibility = View.VISIBLE
-        }
-        val previousFirst = firstIndex
-
-        val window = withContext(Dispatchers.IO) {
+        val state = withContext(Dispatchers.IO) {
             try {
-                client.queue()
+                client.state()
             } catch (e: Exception) {
                 null
             }
         }
-        views.progress.visibility = View.GONE
-        if (window == null) {
-            if (firstTime) {
+        if (state == null) {
+            if (count < 0) {
+                views.progress.visibility = View.GONE
                 views.emptyText.visibility = View.VISIBLE
             }
             return
         }
+        Session.state = state
 
-        // The window itself says what is playing, not the other screen's state:
-        // that one is stopped while this is in front.
-        val playingAt = window.position - window.first
-        val playing = window.paths.getOrNull(playingAt).orEmpty()
-        // The window is centred on the position: as it slides, the rows under
-        // the eye become other tracks unless the view returns to the one playing.
-        val movedWindow = !firstTime && window.first != previousFirst
-
-        // Nothing to redraw while the queue and the position are the same:
-        // redrawing would throw the scroll away every round.
-        val signature = "${window.count}|${window.position}|${window.first}|${window.paths.size}"
-        if (!force && signature == shownSignature) {
-            adapter.highlightPath = playing
-            return
+        if (state.queueRevision != revision || state.queueCount != count) {
+            layOut(state.queueCount, state.queueRevision)
         }
-        val rows = withContext(Dispatchers.IO) {
-            val known = Session.library?.tracksByPaths(window.paths).orEmpty()
-            window.paths.map { path ->
-                known[path] ?: Row(
-                    title = path.substringAfterLast('/'),
-                    subtitle = "",
-                    path = path,
-                )
+        position = state.queuePosition
+        adapter.highlightIndex = position
+
+        supportActionBar?.subtitle = if (position >= 0) {
+            getString(R.string.queue_position, position + 1, count)
+        } else {
+            getString(R.string.tracks_count, count)
+        }
+
+        // On first open and after a new queue, scrolls to the playing row.
+        if (!placed && count > 0) {
+            placed = true
+            if (position in 0 until count) {
+                views.list.scrollToPositionWithOffset(position)
             }
         }
+        fetchVisible()
+    }
 
-        // The rows and where they start move together: there was a suspension
-        // between the two, and a tap landing in the gap worked the position out
-        // from the old window with the new window's numbers.
-        shownSignature = signature
-        firstIndex = window.first
-        adapter.highlightPath = playing
-        adapter.submit(rows)
-        views.emptyText.visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
+    /** A new queue: every row a placeholder until its page arrives. */
+    private fun layOut(total: Int, newRevision: Long) {
+        revision = newRevision
+        count = total.coerceAtLeast(0)
+        loaded.clear()
+        placed = false
+        val placeholder = Row(title = "…", subtitle = "", kind = Row.Kind.PENDING, iconRes = R.drawable.ic_track)
+        adapter.submit(List(count) { placeholder })
+        views.progress.visibility = View.GONE
+        views.emptyText.visibility = if (count == 0) View.VISIBLE else View.GONE
+    }
 
-        supportActionBar?.subtitle = if (window.position >= 0) {
-            getString(R.string.queue_position, window.position + 1, window.count)
-        } else {
-            getString(R.string.tracks_count, window.count)
+    /** Asks for the next page the visible rows need, if one is missing. */
+    private fun fetchVisible() {
+        if (fetching || count <= 0) return
+        val manager = views.list.layoutManager as? LinearLayoutManager ?: return
+        var first = manager.findFirstVisibleItemPosition()
+        var last = manager.findLastVisibleItemPosition()
+        if (first < 0 || last < 0) {
+            // Nothing laid out yet: the rows around the playing one.
+            first = position.coerceAtLeast(0)
+            last = first
         }
+        first = (first - AHEAD).coerceAtLeast(0)
+        last = (last + AHEAD).coerceAtMost(count - 1)
 
-        // On first open, and after a jump, the list goes to the playing track.
-        // The window the player sends is centred on the position, so after a jump
-        // the rows slide underfoot: without this the chosen track ends up off
-        // screen.
-        if ((firstTime || force || movedWindow) && playingAt in rows.indices) {
-            views.list.scrollToPositionWithOffset(playingAt)
+        val page = (first / PAGE..last / PAGE)
+            .map { it * PAGE }
+            .firstOrNull { it !in loaded }
+            ?: return
+        fetchPage(page)
+    }
+
+    private fun fetchPage(from: Int) {
+        val client = Session.client ?: return
+        val wanted = revision
+        fetching = true
+        lifecycleScope.launch {
+            val page = withContext(Dispatchers.IO) {
+                try {
+                    client.queuePage(from)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            fetching = false
+            // Drops a page from a queue that has since changed; the next state
+            // read lays the new one out.
+            if (page == null || revision != wanted || (page.revision >= 0 && page.revision != wanted)) {
+                return@launch
+            }
+            val rows = withContext(Dispatchers.IO) {
+                val known = Session.library?.tracksByPaths(page.paths).orEmpty()
+                page.paths.map { path ->
+                    known[path] ?: Row(
+                        title = path.substringAfterLast('/'),
+                        subtitle = "",
+                        path = path,
+                    )
+                }
+            }
+            if (revision != wanted) return@launch
+            loaded.add(from)
+            adapter.replace(page.first, rows)
+            fetchVisible()
         }
     }
 
@@ -213,39 +242,23 @@ class QueueActivity : AppCompatActivity() {
         manager.scrollToPositionWithOffset(at, height / 3)
     }
 
-    private fun jumpTo(at: Int, row: Row) {
+    private fun jumpTo(index: Int) {
         val client = Session.client ?: return
-        val index = firstIndex + at
-
+        // The highlight moves at once; the next state read confirms it.
+        adapter.highlightIndex = index
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 try {
                     client.playQueueIndex(index)
                 } catch (e: Exception) {
-                    // The row stays put: the next poll will say how it went.
+                    // The next state read shows the outcome.
                 }
             }
-            adapter.highlightPath = row.path
-            // The count at the top follows the jump, not the round after it.
-            load(force = true)
+            refresh()
         }
     }
 
-    private fun refreshVolume() {
-        val client = Session.client ?: return
-        lifecycleScope.launch {
-            val state = withContext(Dispatchers.IO) {
-                try {
-                    client.state()
-                } catch (e: Exception) {
-                    null
-                }
-            } ?: return@launch
-            Session.state = state
-        }
-    }
-
-    /** The level the pill settled on, sent off the main thread. */
+    /** Sends the pill's level off the main thread. */
     private fun sendVolume(level: Int) {
         val client = Session.client ?: return
         lifecycleScope.launch {
@@ -253,7 +266,7 @@ class QueueActivity : AppCompatActivity() {
                 try {
                     client.setVolume(level)
                 } catch (e: Exception) {
-                    // The next poll will say how it really went.
+                    // The next poll shows the real level.
                 }
             }
         }

@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@color/screen_bg">
 
-    <!-- Appears only once a category has been opened. -->
+    <!-- Visible only inside an opened category. -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
@@ -13,6 +13,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@color/surface"
+        android:minHeight="44dp"
         android:visibility="gone">
 
         <ImageButton
@@ -29,10 +30,56 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:paddingStart="8dp"
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/text_primary"
             android:textSize="16sp" />
+
+        <!-- The corner buttons of the title row, as on the player: circle-play
+             where playing the whole list applies, and the selection-mode
+             actions. The code shows only those the list uses. -->
+        <ImageButton
+            android:id="@+id/selQueue"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_list_queue"
+            android:contentDescription="@string/sel_queue" />
+
+        <ImageButton
+            android:id="@+id/selFavAdd"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_star_plus"
+            android:contentDescription="@string/sel_fav_add" />
+
+        <ImageButton
+            android:id="@+id/selPlaylistAdd"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_list_plus"
+            android:contentDescription="@string/sel_playlist_add" />
+
+        <ImageButton
+            android:id="@+id/selFavRemove"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_star_x"
+            android:contentDescription="@string/sel_fav_remove" />
+
+        <ImageButton
+            android:id="@+id/selPlaylistRemove"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_list_x"
+            android:contentDescription="@string/sel_playlist_remove" />
+
+        <ImageButton
+            android:id="@+id/selClose"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_close"
+            android:contentDescription="@string/cd_close" />
+
+        <ImageButton
+            android:id="@+id/playMenu"
+            style="@style/CornerButton"
+            android:src="@drawable/ic_circle_play"
+            android:contentDescription="@string/cd_play_menu" />
     </LinearLayout>
 
     <FrameLayout
@@ -47,8 +94,8 @@
             android:clipToPadding="false"
             android:scrollbars="none" />
 
-        <!-- The letter strip: filled by hand with the letters the list
-             actually has, as the player does from its own counts. -->
+        <!-- The letter index, filled in code with only the letters present in
+             the list. -->
         <LinearLayout
             android:id="@+id/letterStrip"
             android:layout_width="26dp"
@@ -60,10 +107,8 @@
             android:paddingBottom="4dp"
             android:visibility="gone" />
 
-        <!-- The letter under the finger, drawn large in the middle: the finger
-             covers the strip, and without this there is no telling where the
-             list is going. The accent disc comes from the code, which knows
-             this player's colour. -->
+        <!-- The letter under the finger, shown large in the middle because the
+             finger covers the strip. Its accent disc is set in code. -->
         <FrameLayout
             android:id="@+id/indexHint"
             android:layout_width="132dp"

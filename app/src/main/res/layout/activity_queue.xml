@@ -48,8 +48,8 @@
         </FrameLayout>
     </LinearLayout>
 
-    <!-- The volume keys drive the player from here as well: the same pill as
-         every other page. -->
+    <!-- The volume pill, shown when the volume keys change the player's
+         volume. -->
     <include
         android:id="@+id/volume"
         layout="@layout/volume_pill" />

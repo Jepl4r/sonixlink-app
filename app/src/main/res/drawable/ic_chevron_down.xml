@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The player's chevron, turned over: closing the now-playing screen is the
-     opposite of opening it. -->
+<!-- The player's up chevron rotated 180 degrees, for closing the now-playing
+     screen. -->
 <rotate xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_chevron_up"
     android:fromDegrees="180"

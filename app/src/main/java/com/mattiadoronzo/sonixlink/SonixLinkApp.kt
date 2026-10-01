@@ -2,7 +2,7 @@ package com.mattiadoronzo.sonixlink
 
 import android.app.Application
 
-/** Exists only to install the crash recorder before anything else runs. */
+/** Installs the crash recorder before any activity or service starts. */
 class SonixLinkApp : Application() {
 
     override fun onCreate() {

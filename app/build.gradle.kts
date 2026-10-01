@@ -31,8 +31,8 @@ android {
     }
     buildFeatures {
         viewBinding = true
-        // CrashLog needs it to write the version into the report: since AGP 8
-        // it is no longer generated on its own.
+        // CrashLog writes BuildConfig's version into the report; AGP 8 does not
+        // generate BuildConfig unless this is on.
         buildConfig = true
     }
 }
@@ -43,6 +43,8 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.fragment:fragment-ktx:1.8.2")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    // MediaSessionCompat and the media-style notification of PlayerService.
+    implementation("androidx.media:media:1.7.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")

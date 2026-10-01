@@ -4,6 +4,11 @@
     <string name="connect_none">Плеер не найден. Проверьте, что SonixLink включён на плеере и что телефон в той же сети Wi-Fi.</string>
     <string name="connect_rescan">Искать снова</string>
     <string name="connect_failed">Не отвечает: %1$s</string>
+    <string name="connect_bluetooth">Подключиться по Bluetooth</string>
+    <string name="bluetooth_pick">Сопряжённые устройства</string>
+    <string name="bluetooth_none">Нет сопряжённых устройств. Включите Bluetooth и SonixLink на плеере, затем выполните сопряжение в настройках Bluetooth телефона.</string>
+    <string name="bluetooth_off">Bluetooth на телефоне выключен.</string>
+    <string name="bluetooth_denied">Без разрешения Bluetooth приложение не может связаться с плеером.</string>
 
     <string name="crash_title">Приложение закрылось само</string>
     <string name="crash_copy">Копировать</string>
@@ -22,6 +27,7 @@
     <string name="tab_album_artists">Исп. альбомов</string>
     <string name="tab_playlists">Плейлисты</string>
     <string name="tab_favourites">Избранное</string>
+    <string name="tab_folders">Папки</string>
 
     <string name="downloading">Загрузка индекса…</string>
     <string name="downloading_progress">Загрузка индекса… %1$d%%</string>
@@ -44,6 +50,29 @@
     <string name="sync_unreachable">Плеер не отвечает.</string>
     <string name="sync_no_library">Не удалось загрузить индекс.</string>
     <string name="retry">Повторить</string>
+
+    <string name="notification_channel">Воспроизведение на плеере</string>
+    <string name="notification_channel_description">Трек, играющий на плеере, и его управление.</string>
+    <string name="notification_connected">Подключено к %1$s</string>
+    <string name="notification_disconnect">Отключить</string>
+
+    <string name="cd_play_menu">Воспроизвести всё</string>
+    <string name="play_random">Воспроизвести в случайном порядке</string>
+    <string name="play_sequence">Воспроизвести по порядку</string>
+    <string name="play_random_track">Добавить случайный трек в очередь</string>
+    <string name="selected_count">Выбрано: %1$d</string>
+    <string name="sel_queue">Добавить в очередь</string>
+    <string name="sel_fav_add">Добавить в избранное</string>
+    <string name="sel_playlist_add">Добавить в плейлист</string>
+    <string name="sel_fav_remove">Убрать из избранного</string>
+    <string name="sel_playlist_remove">Убрать из плейлиста</string>
+    <string name="done_queue">Добавлены в очередь</string>
+    <string name="done_fav">Добавлены в избранное</string>
+    <string name="done_playlist">Треки добавлены</string>
+    <string name="done_removed">Треки удалены</string>
+    <string name="playlist_new">Новый плейлист</string>
+    <string name="playlist_name_hint">Название плейлиста</string>
+    <string name="sync_progress">%1$s из %2$s</string>
 
     <string name="queue_title">Очередь</string>
     <string name="queue_position">%1$d из %2$d</string>
