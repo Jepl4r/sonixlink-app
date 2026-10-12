@@ -1,0 +1,98 @@
+<resources>
+    <string name="connect_title">Znajdź odtwarzacz</string>
+    <string name="connect_searching">Wyszukiwanie…</string>
+    <string name="connect_none">Nie znaleziono odtwarzacza. Upewnij się, że SonixLink jest włączony w odtwarzaczu, a telefon jest połączony z tą samą siecią Wi-Fi.</string>
+    <string name="connect_rescan">Szukaj ponownie</string>
+    <string name="connect_failed">Brak odpowiedzi: %1$s</string>
+    <string name="connect_bluetooth">Połącz przez Bluetooth</string>
+    <string name="bluetooth_pick">Sparowane urządzenia</string>
+    <string name="bluetooth_none">Brak sparowanych urządzeń. Włącz Bluetooth i SonixLink w odtwarzaczu, a następnie sparuj go z telefonem w ustawieniach Bluetooth telefonu.</string>
+    <string name="bluetooth_off">Bluetooth w telefonie jest wyłączony.</string>
+    <string name="bluetooth_denied">Bez uprawnień Bluetooth aplikacja nie może połączyć się z odtwarzaczem.</string>
+
+    <string name="crash_title">Aplikacja została nieoczekiwanie zamknięta</string>
+    <string name="crash_copy">Kopiuj</string>
+    <string name="crash_dismiss">Zamknij</string>
+
+    <plurals name="players_found">
+        <item quantity="one">Znaleziono jeden odtwarzacz</item>
+        <item quantity="few">Znaleziono %1$d odtwarzacze</item>
+        <item quantity="many">Znaleziono %1$d odtwarzaczy</item>
+        <item quantity="other">Znaleziono %1$d odtwarzaczy</item>
+    </plurals>
+
+    <string name="tab_tracks">Utwory</string>
+    <string name="tab_albums">Albumy</string>
+    <string name="tab_artists">Wykonawcy</string>
+    <string name="tab_album_artists">Wykonawcy albumów</string>
+    <string name="tab_playlists">Playlisty</string>
+    <string name="tab_favourites">Ulubione</string>
+    <string name="tab_folders">Foldery</string>
+
+    <string name="downloading">Pobieranie indeksu…</string>
+    <string name="downloading_progress">Pobieranie indeksu… %1$d%%</string>
+    <string name="download_failed">Nie udało się pobrać indeksu: %1$s</string>
+    <string name="library_ready">%1$d utworów</string>
+    <string name="scanning_wait">Odtwarzacz skanuje bibliotekę. Spróbuj ponownie po zakończeniu.</string>
+    <string name="empty_list">Nic tu nie ma.</string>
+    <string name="tracks_count">%1$d utworów</string>
+    <string name="nothing_playing">Nic nie jest odtwarzane</string>
+    <string name="refresh_library">Odśwież indeks</string>
+    <string name="disconnect">Zmień urządzenie</string>
+    <string name="search_hint">Szukaj</string>
+    <string name="search_title">Szukaj</string>
+    <string name="search_nothing">Brak wyników.</string>
+    <string name="command_failed">Odtwarzacz nie odpowiada.</string>
+    <string name="playing_now">Teraz odtwarzane</string>
+    <string name="syncing">Synchronizowanie utworów…</string>
+    <string name="sync_library">Pobieranie indeksu biblioteki</string>
+    <string name="sync_covers">Pobieranie okładek</string>
+    <string name="sync_unreachable">Odtwarzacz nie odpowiada.</string>
+    <string name="sync_no_library">Nie udało się pobrać indeksu.</string>
+    <string name="retry">Spróbuj ponownie</string>
+
+    <string name="notification_channel">Odtwarzanie na odtwarzaczu</string>
+    <string name="notification_channel_description">Utwór odtwarzany na odtwarzaczu wraz z elementami sterującymi.</string>
+    <string name="notification_connected">Połączono z %1$s</string>
+    <string name="notification_disconnect">Rozłącz</string>
+
+    <string name="cd_play_menu">Odtwórz wszystko</string>
+    <string name="play_random">Odtwarzaj losowo</string>
+    <string name="play_sequence">Odtwarzaj po kolei</string>
+    <string name="play_random_track">Dodaj losowy utwór do kolejki</string>
+    <string name="selected_count">Wybrano %1$d</string>
+    <string name="sel_queue">Dodaj do kolejki</string>
+    <string name="sel_fav_add">Dodaj do ulubionych</string>
+    <string name="sel_playlist_add">Dodaj do playlisty</string>
+    <string name="sel_fav_remove">Usuń z ulubionych</string>
+    <string name="sel_playlist_remove">Usuń z playlisty</string>
+    <string name="done_queue">Dodano do kolejki</string>
+    <string name="done_fav">Dodano do ulubionych</string>
+    <string name="done_playlist">Dodano utwory</string>
+    <string name="done_removed">Usunięto utwory</string>
+    <string name="playlist_new">Nowa playlista</string>
+    <string name="playlist_name_hint">Nazwa playlisty</string>
+    <string name="sync_progress">%1$s z %2$s</string>
+
+    <string name="queue_title">Kolejka</string>
+    <string name="queue_position">%1$d z %2$d</string>
+    <string name="queue_empty">Kolejka jest pusta.</string>
+
+    <string name="mode_normal">Po kolei</string>
+    <string name="mode_repeat_all">Powtarzaj wszystko</string>
+    <string name="mode_repeat_one">Powtarzaj utwór</string>
+    <string name="mode_shuffle">Losowo</string>
+    <string name="mode_shuffle_repeat">Losowo i powtarzaj</string>
+
+    <string name="cd_play">Odtwórz</string>
+    <string name="cd_pause">Wstrzymaj</string>
+    <string name="cd_next">Następny</string>
+    <string name="cd_prev">Poprzedni</string>
+    <string name="cd_mode">Tryb odtwarzania</string>
+    <string name="cd_volume">Głośność</string>
+    <string name="cd_favourite">Ulubione</string>
+    <string name="cd_queue">Kolejka</string>
+    <string name="cd_back">Wstecz</string>
+    <string name="cd_close">Zamknij</string>
+    <string name="volume_label">Głośność %1$d</string>
+</resources>
