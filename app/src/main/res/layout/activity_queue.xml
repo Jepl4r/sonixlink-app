@@ -17,7 +17,42 @@
             android:background="@color/screen_bg"
             app:navigationIcon="@drawable/ic_back"
             app:titleTextColor="@color/text_primary"
-            app:subtitleTextColor="@color/text_secondary" />
+            app:subtitleTextColor="@color/text_secondary">
+
+            <!-- The corner buttons, as on the player's queue page: selection and
+                 reordering, and in selection mode the bin and the way out. -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="4dp"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/queueSelect"
+                    style="@style/CornerButton"
+                    android:src="@drawable/ic_select_mode"
+                    android:contentDescription="@string/cd_select" />
+
+                <ImageButton
+                    android:id="@+id/queueReorder"
+                    style="@style/CornerButton"
+                    android:src="@drawable/ic_reorder"
+                    android:contentDescription="@string/cd_reorder" />
+
+                <ImageButton
+                    android:id="@+id/queueRemove"
+                    style="@style/CornerButton"
+                    android:src="@drawable/ic_trash"
+                    android:contentDescription="@string/cd_remove" />
+
+                <ImageButton
+                    android:id="@+id/queueClose"
+                    style="@style/CornerButton"
+                    android:src="@drawable/ic_close"
+                    android:contentDescription="@string/cd_close" />
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
 
         <FrameLayout
             android:layout_width="match_parent"

@@ -75,6 +75,14 @@
     <string name="queue_title">File d\'attente</string>
     <string name="queue_position">%1$d sur %2$d</string>
     <string name="queue_empty">La file d\'attente est vide.</string>
+    <string name="queue_now_playing">En cours de lecture</string>
+    <string name="queue_history">Historique</string>
+    <string name="history_today">Aujourd\'hui</string>
+    <string name="history_yesterday">Hier</string>
+    <string name="done_queue_removed">Retirés de la file d\'attente</string>
+    <string name="cd_select">Sélectionner</string>
+    <string name="cd_reorder">Réorganiser</string>
+    <string name="cd_remove">Retirer</string>
 
     <string name="mode_normal">Dans l\'ordre</string>
     <string name="mode_repeat_all">Tout répéter</string>

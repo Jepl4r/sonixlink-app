@@ -77,6 +77,14 @@
     <string name="queue_title">Очередь</string>
     <string name="queue_position">%1$d из %2$d</string>
     <string name="queue_empty">Очередь пуста.</string>
+    <string name="queue_now_playing">Сейчас играет</string>
+    <string name="queue_history">История</string>
+    <string name="history_today">Сегодня</string>
+    <string name="history_yesterday">Вчера</string>
+    <string name="done_queue_removed">Убрано из очереди</string>
+    <string name="cd_select">Выбрать</string>
+    <string name="cd_reorder">Изменить порядок</string>
+    <string name="cd_remove">Убрать</string>
 
     <string name="mode_normal">По порядку</string>
     <string name="mode_repeat_all">Повтор всего</string>

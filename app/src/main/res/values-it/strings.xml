@@ -79,6 +79,14 @@
     <string name="queue_title">Coda</string>
     <string name="queue_position">%1$d di %2$d</string>
     <string name="queue_empty">La coda è vuota.</string>
+    <string name="queue_now_playing">In ascolto</string>
+    <string name="queue_history">Cronologia</string>
+    <string name="history_today">Oggi</string>
+    <string name="history_yesterday">Ieri</string>
+    <string name="done_queue_removed">Tolti dalla coda</string>
+    <string name="cd_select">Seleziona</string>
+    <string name="cd_reorder">Riordina</string>
+    <string name="cd_remove">Rimuovi</string>
 
     <string name="mode_normal">In ordine</string>
     <string name="mode_repeat_all">Ripeti tutto</string>

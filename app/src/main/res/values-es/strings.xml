@@ -75,6 +75,14 @@
     <string name="queue_title">Cola</string>
     <string name="queue_position">%1$d de %2$d</string>
     <string name="queue_empty">La cola está vacía.</string>
+    <string name="queue_now_playing">Sonando ahora</string>
+    <string name="queue_history">Historial</string>
+    <string name="history_today">Hoy</string>
+    <string name="history_yesterday">Ayer</string>
+    <string name="done_queue_removed">Quitados de la cola</string>
+    <string name="cd_select">Seleccionar</string>
+    <string name="cd_reorder">Reordenar</string>
+    <string name="cd_remove">Quitar</string>
 
     <string name="mode_normal">En orden</string>
     <string name="mode_repeat_all">Repetir todo</string>

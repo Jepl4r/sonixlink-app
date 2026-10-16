@@ -75,6 +75,14 @@
     <string name="queue_title">Warteschlange</string>
     <string name="queue_position">%1$d von %2$d</string>
     <string name="queue_empty">Die Warteschlange ist leer.</string>
+    <string name="queue_now_playing">Läuft gerade</string>
+    <string name="queue_history">Verlauf</string>
+    <string name="history_today">Heute</string>
+    <string name="history_yesterday">Gestern</string>
+    <string name="done_queue_removed">Aus der Warteschlange entfernt</string>
+    <string name="cd_select">Auswählen</string>
+    <string name="cd_reorder">Neu anordnen</string>
+    <string name="cd_remove">Entfernen</string>
 
     <string name="mode_normal">Der Reihe nach</string>
     <string name="mode_repeat_all">Alle wiederholen</string>

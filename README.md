@@ -19,8 +19,11 @@ An Android app that drives **Sonix Player** for the HiBy R3 Pro II from your pho
   artist or a playlist, then add the chosen tracks to the queue, the
   favourites or a playlist (or take them out of the favourites or the
   playlist they are in).
-- **The whole queue**, row for row as on the player, fetched page by page as
-  you scroll and redrawn whenever the queue changes there.
+- **The queue page of the player**: Now playing at the top and what is to play
+  below, fetched page by page as you scroll; the history above, a heading per
+  day, held back when pulled down from Now playing. Select rows to take them
+  out, drag them by the grip to reorder them, tap an entry of the history to
+  play it next or long-press it to drop a copy anywhere in what is to play.
 - **A media notification** with the track playing on the player, its artwork,
   previous/play-pause/next and the position bar, also on the lock screen, so
   the app does not need to be opened to change track.
@@ -71,9 +74,18 @@ says `/api/bye` when it disconnects.
 | `GET /api/ping` | `ok` -- the heartbeat, for a client that needs nothing else |
 | `GET /api/bye` | the app is leaving: the player drops the icon at once |
 | `GET /api/favourites` | the favourites as they stand right now |
+| `GET /api/history[?limit=<n>]` | the latest `n` (200, at most 1000) entries of what the player has played, oldest first: `{revision, items:[{id, path, title, artist, played_at}]}`; `history_revision` in the state changes when one is added |
 | `GET /api/art?path=[&max=<px>]` | one track's artwork, whole and undecoded; with `max` fitted into that many pixels and sent as a JPEG of a few tens of KB. A fitted cover is made on a thread of its own: until it is ready the answer is `202` and the app asks again a moment later (the player also makes the next track's cover ahead, at the size last asked for) |
 | `POST /api/command?do=…` | `play`, `pause`, `toggle`, `next`, `prev`, `seek&value=<seconds>`, `volume&value=<0-100>`, `mode&value=<normal\|repeat_all\|repeat_one\|shuffle\|shuffle_repeat>`, `play_path&path=<path>[&list=<all\|album\|artist\|album_artist\|genre\|favourites\|playlist\|queue\|folder>&value=<name>]`, `favourite&path=<path>[&value=0\|1]`, `queue_index&value=<n>`, `scan`, `play_all&list=<…\|albums>&value=<name>&how=<sequence\|shuffle\|random>` (the circle-play menu) |
 | `POST /api/command?do=<queue_next\|favourites_add\|favourites_remove\|playlist_add\|playlist_remove>[&value=<playlist>]` | a selection of tracks, as the player's selection mode: the paths in the body, one a line |
+| `POST /api/command?do=queue_remove&rev=<r>` | the queue entries in the body (indices, one a line) taken out |
+| `POST /api/command?do=queue_move&from=<i>&to=<j>&rev=<r>` | one entry moved, `to` being where it ends up |
+| `POST /api/command?do=history_play&id=<id>` | an entry of the history put in right after the track playing, and played |
+| `POST /api/command?do=history_insert&id=<id>&at=<slot>&rev=<r>` | an entry of the history put in the queue at `slot` |
+
+The queue commands change only what comes after the track playing, and `rev`
+is the queue revision they were worked out against: the player drops a
+command meant for a queue that has changed since.
 
 `play_path` carries the list the track was touched in, so the queue becomes that
 list.
