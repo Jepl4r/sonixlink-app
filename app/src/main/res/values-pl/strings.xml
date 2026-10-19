@@ -60,7 +60,7 @@
     <string name="play_random">Odtwarzaj losowo</string>
     <string name="play_sequence">Odtwarzaj po kolei</string>
     <string name="play_random_track">Dodaj losowy utwór do kolejki</string>
-    <string name="selected_count">Wybrano %1$d</string>
+    <string name="selected_count">Zaznaczono %1$d</string>
     <string name="sel_queue">Dodaj do kolejki</string>
     <string name="sel_fav_add">Dodaj do ulubionych</string>
     <string name="sel_playlist_add">Dodaj do playlisty</string>
@@ -77,6 +77,14 @@
     <string name="queue_title">Kolejka</string>
     <string name="queue_position">%1$d z %2$d</string>
     <string name="queue_empty">Kolejka jest pusta.</string>
+	<string name="queue_now_playing">Teraz odtwarzane</string>
+    <string name="queue_history">Historia</string>
+    <string name="history_today">Dzisiaj</string>
+    <string name="history_yesterday">Wczoraj</string>
+    <string name="done_queue_removed">Usunięto z kolejki</string>
+    <string name="cd_select">Zaznacz</string>
+    <string name="cd_reorder">Zmień kolejność</string>
+    <string name="cd_remove">Usuń</string>
 
     <string name="mode_normal">Po kolei</string>
     <string name="mode_repeat_all">Powtarzaj wszystko</string>
