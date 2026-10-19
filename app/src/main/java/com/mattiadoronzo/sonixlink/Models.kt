@@ -130,6 +130,8 @@ data class PlayerState(
      */
     val favouritesRevision: Long = -1,
     val playlistsRevision: Long = -1,
+    /** The newest entry of the history; -1 from a player that does not send it. */
+    val historyRevision: Long = -1,
 ) {
     val isPlaying: Boolean get() = playState == 1
     val hasTrack: Boolean get() = title.isNotEmpty() || path.isNotEmpty()

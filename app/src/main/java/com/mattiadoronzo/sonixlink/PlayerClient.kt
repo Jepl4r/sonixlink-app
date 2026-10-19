@@ -128,6 +128,7 @@ class PlayerClient(val host: String, val port: Int = DEFAULT_PORT) {
             albumArtist = json.optString("album_artist", ""),
             favouritesRevision = json.optLong("favourites_revision", -1),
             playlistsRevision = json.optLong("playlists_revision", -1),
+            historyRevision = json.optLong("history_revision", -1),
         )
     }
 
@@ -155,6 +156,57 @@ class PlayerClient(val host: String, val port: Int = DEFAULT_PORT) {
         command("do" to "play_path", "path" to path, "list" to list, "value" to value)
     fun startScan() = command("do" to "scan")
     fun playQueueIndex(index: Int) = command("do" to "queue_index", "value" to index.toString())
+
+    /**
+     * The queue page's edits, as on the player: only entries after the track
+     * playing change. `revision` is the queue revision the indices were read
+     * against; the player drops the command when its queue has moved on since.
+     */
+    fun queueRemove(indices: List<Int>, revision: Long) {
+        if (indices.isEmpty()) return
+        request(
+            "/api/command?do=queue_remove&rev=$revision",
+            method = "POST",
+            body = indices.joinToString("\n").toByteArray(Charsets.UTF_8),
+        )
+    }
+
+    fun queueMove(from: Int, to: Int, revision: Long) = command(
+        "do" to "queue_move", "from" to from.toString(), "to" to to.toString(), "rev" to revision.toString(),
+    )
+
+    /** An entry of the history played right after the track playing. */
+    fun historyPlay(id: Long) = command("do" to "history_play", "id" to id.toString())
+
+    /** An entry of the history put in the queue at `slot`. */
+    fun historyInsert(id: Long, slot: Int, revision: Long) = command(
+        "do" to "history_insert", "id" to id.toString(), "at" to slot.toString(), "rev" to revision.toString(),
+    )
+
+    /**
+     * The latest entries of what the player has played, oldest first. Throws
+     * on a player without the route.
+     */
+    fun history(limit: Int = 200): List<HistoryEntry> {
+        val json = JSONObject(request("/api/history?limit=$limit"))
+        val array = json.optJSONArray("items") ?: return emptyList()
+        val out = ArrayList<HistoryEntry>(array.length())
+        for (i in 0 until array.length()) {
+            val item = array.optJSONObject(i) ?: continue
+            val path = item.optString("path", "")
+            if (path.isEmpty()) continue
+            out.add(
+                HistoryEntry(
+                    id = item.optLong("id", 0),
+                    path = path,
+                    title = item.optString("title", ""),
+                    artist = item.optString("artist", ""),
+                    playedAt = item.optLong("played_at", 0),
+                )
+            )
+        }
+        return out
+    }
 
     /**
      * The player's play-all menu for a list. `how` is "sequence", "shuffle" or
@@ -502,6 +554,16 @@ data class QueueWindow(
     val revision: Long = -1,
     /** The player has not fetched that stretch yet: ask again. */
     val pending: Boolean = false,
+)
+
+/** One entry of the player's history: a track as it was when it was played. */
+data class HistoryEntry(
+    val id: Long,
+    val path: String,
+    val title: String,
+    val artist: String,
+    /** Seconds since the epoch; 0 when the player's clock was not set. */
+    val playedAt: Long,
 )
 
 /** One thumbnail from the player: w and h at zero mean "no artwork". */

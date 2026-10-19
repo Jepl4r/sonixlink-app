@@ -79,6 +79,14 @@
     <string name="queue_title">Queue</string>
     <string name="queue_position">%1$d of %2$d</string>
     <string name="queue_empty">The queue is empty.</string>
+    <string name="queue_now_playing">Now playing</string>
+    <string name="queue_history">History</string>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
+    <string name="done_queue_removed">Removed from the queue</string>
+    <string name="cd_select">Select</string>
+    <string name="cd_reorder">Reorder</string>
+    <string name="cd_remove">Remove</string>
 
     <string name="mode_normal">In order</string>
     <string name="mode_repeat_all">Repeat all</string>

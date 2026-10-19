@@ -51,6 +51,14 @@ class RowAdapter(
 
     val selected: List<Int> get() = chosen.sorted()
 
+    /** Selection mode with nothing chosen yet, as the queue's button starts it. */
+    @Suppress("NotifyDataSetChanged")
+    fun startEmptySelection() {
+        selecting = true
+        chosen.clear()
+        notifyDataSetChanged()
+    }
+
     @Suppress("NotifyDataSetChanged")
     fun startSelection(first: Int) {
         selecting = true
@@ -72,6 +80,37 @@ class RowAdapter(
         notifyItemChanged(position)
         return chosen.size
     }
+
+    // -----------------------------------------------------------------------
+    // Rearranging (the queue)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Which rows show the grip in place of the chevron. Null: none. A press on
+     * the grip goes to [onGripPressed] with the row's holder, for the list's
+     * ItemTouchHelper to pick it up.
+     */
+    var gripAt: ((Int) -> Boolean)? = null
+        @Suppress("NotifyDataSetChanged")
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
+    var onGripPressed: ((RecyclerView.ViewHolder) -> Unit)? = null
+
+    /** Moves one row, as a drag goes along. */
+    fun move(from: Int, to: Int) {
+        if (from !in items.indices || to !in items.indices || from == to) return
+        val row = items.removeAt(from)
+        items.add(to, row)
+        notifyItemMoved(from, to)
+    }
+
+    /** The rows as they stand, for a list that rearranges them. */
+    fun rows(): List<Row> = ArrayList(items)
+
+    /** Whether a row is chosen in selection mode. */
+    fun isChosen(position: Int): Boolean = selecting && position in chosen
 
     /** Takes rows out of the list (a removal the player has confirmed). */
     @Suppress("NotifyDataSetChanged")
@@ -221,6 +260,26 @@ class RowAdapter(
         views.chevron.visibility =
             if (selecting || row.isTrack || row.kind == Row.Kind.PENDING) View.GONE else View.VISIBLE
         views.check.visibility = if (isChosen) View.VISIBLE else View.GONE
+        val grip = gripAt?.invoke(position) == true
+        views.chevron.setImageResource(if (grip) R.drawable.ic_grip else R.drawable.ic_chevron)
+        // The grip is something to take hold of, so a larger square than the
+        // chevron's.
+        val side = ((if (grip) 28 else 18) * context.resources.displayMetrics.density).toInt()
+        views.chevron.layoutParams = views.chevron.layoutParams.apply {
+            width = side
+            height = side
+        }
+        if (grip) {
+            views.chevron.visibility = View.VISIBLE
+            views.chevron.setOnTouchListener { _, event ->
+                if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                    onGripPressed?.invoke(holder)
+                }
+                false
+            }
+        } else {
+            views.chevron.setOnTouchListener(null)
+        }
         if (isChosen) {
             views.check.imageTintList = android.content.res.ColorStateList.valueOf(Session.accent)
             views.root.setBackgroundColor(
